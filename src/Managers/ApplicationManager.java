@@ -1,0 +1,196 @@
+package Managers;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.PrintWriter;
+import java.io.Serializable;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
+
+import model.Application;
+import model.Review;
+import model.Review.ReviewBuilder;
+import util.PostgreSQLConnector;
+
+public class ApplicationManager implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 6981176569155372512L;
+	private static ApplicationManager instance = null;
+	private Set<Application> appSet;
+	private long lastUpdate;
+	private long currentUpdate;
+	public static final String FILENAME = "\\AndroidAnalysis\\ReviewData\\data\\"
+			+ "applicationsData" + ".ser";
+	private int totalReviewCount;
+	public static synchronized ApplicationManager getInstance() {
+		if (instance == null) {
+			File fcheckExist = new File(FILENAME);
+			if (fcheckExist.exists() && !fcheckExist.isDirectory()) {
+				System.err.println(">>Read Application Manager from file.");
+				FileInputStream fin;
+				try {
+					fin = new FileInputStream(FILENAME);
+					ObjectInputStream oos = new ObjectInputStream(fin);
+					instance = (ApplicationManager) oos.readObject();
+				} catch (FileNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					instance = new ApplicationManager();
+				} catch (ClassNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					instance = new ApplicationManager();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					instance = new ApplicationManager();
+				}
+			} else
+				instance = new ApplicationManager();
+		}
+		return instance;
+	}
+
+	private ApplicationManager() {
+		appSet = new HashSet<>();
+		lastUpdate = 0;
+		currentUpdate = 0;
+		totalReviewCount = 0;
+	}
+
+	/**
+	 * Create new instance of Application and add them to the list
+	 * 
+	 * @param appID
+	 *            - the String contains the appID on Google Play.
+	 * @param dbID
+	 *            - the String contains the dbID on our database.
+	 * @return False if this appID is already in the list, True if it isn't and
+	 *         is successfully added
+	 * 
+	 */
+	public boolean addNewApp(String appID, int dbID) {
+		return appSet.add(new Application(appID, dbID));
+	}
+
+	public void writeSentenceToFile(PrintWriter fileWriter) {
+		for (Application app : appSet) {
+			app.writeSentenceToFile(fileWriter, lastUpdate);
+		}
+	}
+
+	public int fillAppsWithReviews() {
+		PostgreSQLConnector db = null;
+		int count = 0;
+		long startTime = System.nanoTime();
+		lastUpdate = currentUpdate;
+		try {
+			long thisUpdate = currentUpdate;
+			db = new PostgreSQLConnector(PostgreSQLConnector.DBLOGIN,
+					PostgreSQLConnector.DBPASSWORD,
+					PostgreSQLConnector.REVIEWDB);
+			String fields[] = { "title", "text", "rating", "creationtime",
+					"documentversion", "reviewid", "device" };
+			for (Application app : appSet) {
+				String condition = "appid=" + app.getDbID()
+						+ " AND creationtime>" + currentUpdate;
+				ResultSet results;
+				results = db.select(PostgreSQLConnector.REVIEWS_TABLE, fields,
+						condition);
+				while (results.next()) {
+					try {
+						Review.ReviewBuilder reviewBuilder = new Review.ReviewBuilder();
+						long creationTime = results.getLong("creationtime");
+						if (creationTime <= currentUpdate)
+							continue;
+						String[] str = (results.getString("text").split("\t"));
+						String title = results.getString("title");
+						if (str.length > 1) {
+							reviewBuilder.text(str[1]);
+							reviewBuilder.title(str[0]);
+						} else {
+							reviewBuilder.text(str[0]);
+							reviewBuilder.title(title);
+						}
+						String reviewID = results.getString("reviewid");
+						reviewBuilder.reviewId(reviewID);
+						reviewBuilder.deviceName(results.getString("device"));
+						reviewBuilder.documentVersion(results
+								.getString("documentversion"));
+						reviewBuilder.rating(results.getInt("rating"));
+						reviewBuilder.creationTime(creationTime);
+						reviewBuilder.application(app);
+						if (!app.contains(reviewID)) {
+							app.addReview(reviewBuilder.createReview());
+							if (thisUpdate < creationTime)
+								thisUpdate = creationTime;
+							count++;
+							if (count % 10000 == 0) {
+
+								long stopTime = System.nanoTime();
+								long duration = stopTime - startTime;
+								startTime = stopTime;
+								System.out.println("Reviews processed: "
+										+ count
+										+ ", time passed since last message: "
+										+ (duration / 1000000)
+										+ " milliseconds");
+							}
+						}
+					} catch (SQLException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+
+			}
+			if (thisUpdate > currentUpdate)
+				currentUpdate = thisUpdate;
+
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} finally {
+			if (db != null)
+				db.close();
+		}
+		totalReviewCount += count;
+		return count;
+	}
+
+	public int reviewsNumber() {
+		return totalReviewCount;
+	}
+
+	public long getLastUpdate() {
+		return lastUpdate;
+	}
+
+	public int applicationsNumber() {
+		return appSet.size();
+	}
+
+	public void setLastUpdate(long time) {
+		lastUpdate = time;
+	}
+
+	public long getCurrentUpdateTime() {
+		return currentUpdate;
+	}
+
+	public long getLastUpdateTime() {
+		return lastUpdate;
+	}
+	
+	public Set<Application> getAppSet(){
+		return appSet;
+	}
+}
