@@ -32,6 +32,7 @@ import model.Vocabulary;
 import util.PostgreSQLConnector;
 import util.Util;
 import Managers.ApplicationManager;
+import NLP.SymSpell;
 
 public class AnalyserForVoc {
 	private static final String URBAN_DIC_API = "http://api.urbandictionary.com/v0/define?term=";
@@ -40,7 +41,8 @@ public class AnalyserForVoc {
 		HashSet<String> blackList = new HashSet<>();
 		loadBlackList(blackList, new File("blackList.txt"));
 		HashMap<String, Integer> inWordCount = new HashMap<>();
-		loadDictionary(inWordCount, new File("E:\\dictionary").listFiles());
+		loadDictionary(inWordCount,
+				new File("E:\\dictionary\\improvised\\").listFiles());
 		System.out.println("Dictionary loaded!!!");
 		HashMap<String, Integer> outWordCount = new HashMap<>();
 		PostgreSQLConnector db = null;
@@ -58,6 +60,13 @@ public class AnalyserForVoc {
 			count++;
 			text = text.toLowerCase();
 			String[] words = text.split("[^a-z']+");
+			boolean ignore = false;
+			for (String word : words) {
+				if (blackList.contains(word))
+					ignore = true;
+			}
+			if (ignore)
+				continue;
 			for (String word : words) {
 				if (word.length() < 2)
 					continue;
@@ -95,7 +104,7 @@ public class AnalyserForVoc {
 		// TODO Auto-generated method stub
 		Scanner br = new Scanner(new FileReader(file));
 		while (br.hasNext())
-			blackList.add(br.next());
+			blackList.add(br.next().toLowerCase());
 		br.close();
 	}
 
@@ -112,15 +121,29 @@ public class AnalyserForVoc {
 					}
 				});
 		PrintWriter pwDict = new PrintWriter(fileName + "_DICT.txt");
-		PrintWriter pwNonDict = new PrintWriter(fileName + "_NonDICT.txt");
+		PrintWriter pwNonDict = null;
+		SymSpell symspell = SymSpell.getInstance();
+		if (urbanCheck)
+			pwNonDict = new PrintWriter(fileName + "_NonDICT.txt");
 		for (Map.Entry<String, Integer> entry : wordList) {
 			int count = entry.getValue();
 			if (urbanCheck) {
 				if (count >= minCount) {
+					String w = entry.getKey();
 					if (checkExistanceWithUrbanDictionary(entry.getKey()))
-						pwDict.println(entry.getKey() + "," + count);
+						pwDict.println(w
+								+ ","
+								+ count
+								+ ","
+								+ symspell.correctThisWord(w,
+										SymSpell.LANGUAGE, false));
 					else {
-						pwNonDict.println(entry.getKey() + "," + count);
+						pwNonDict.println(entry.getKey()
+								+ ","
+								+ count
+								+ ","
+								+ symspell.correctThisWord(w,
+										SymSpell.LANGUAGE, false));
 					}
 				}
 			} else if (count >= minCount)

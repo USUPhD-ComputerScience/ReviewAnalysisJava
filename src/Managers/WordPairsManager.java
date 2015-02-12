@@ -93,15 +93,19 @@ public class WordPairsManager implements Serializable {
 					for (int i = 0; i < wordIDList.size() - 1; i++) {
 						int j = 1;
 						while (j <= WINDOW_SIZE && (i + j) < wordIDList.size()) {
+							int w1 = wordIDList.get(i);
+							int w2 = wordIDList.get(i + j++);
+							if (w1 == w2)
+								continue;
 							count++;
-							long pair = (((long)wordIDList.get(i)) << 32) | (wordIDList.get(i + j++) & 0xffffffffL);
+							long pair = (((long)w1) << 32) | (w2 & 0xffffffffL);
 							//int x = (int)(l >> 32);
 							//int y = (int)l;
 							//PairOfWords pair = new PairOfWords(
 							//		wordIDList.get(i), wordIDList.get(i + j++));
 							Integer pairFreq = pairMap.get(pair);
 							if (pairFreq != null) {
-								review.addNewPair(pair);
+								//review.addNewPair(pair);
 								pairMap.put(pair, pairFreq++);
 							} else {
 								review.addNewPair(pair);

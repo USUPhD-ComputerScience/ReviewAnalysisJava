@@ -23,7 +23,8 @@ public class NatureLanguageProcessor {
 			"WP$", "WRB", "$", "``", "NNPS", "NNS", "PDT", "POS", "PRP",
 			"PRP$", "RB", "RBR", "RBS", "RP", "SYM", "TO", "CC", "CD", "DT",
 			"EX", "FW", "IN", "JJ", "JJR", "JJS", "LS", "MD", "NN", "NNP" };
-	public static final Set<String> POSSET = new HashSet<>(Arrays.asList(POSLIST));
+	public static final Set<String> POSSET = new HashSet<>(
+			Arrays.asList(POSLIST));
 	private Set<String> stopWordSet;
 	private static NatureLanguageProcessor instance = null;
 	MaxentTagger PoSTagger;
@@ -117,6 +118,8 @@ public class NatureLanguageProcessor {
 	 */
 	public List<String[]> breakSentenceIntoWords(String fullSentence) {
 		List<String[]> wordList = findPosTagAndRemoveStopWords(fullSentence);
+		if (wordList == null)
+			return null;
 		if (wordList.size() < 1)
 			return null;
 		return stem(wordList);
@@ -169,10 +172,19 @@ public class NatureLanguageProcessor {
 		StringBuilder textForTag = new StringBuilder();
 		String[] words = input.split(" ");
 		String prefix = "";
+		boolean ignore = false;
+		HashSet<String> blackList = spellCorrector.getBlackList();
+		for (int i = 0; i < words.length; i++) {
+
+			if (blackList.contains(words[i]))
+				ignore = true;
+		}
+		if (ignore)
+			return null;
 		for (int i = 0; i < words.length; i++) {
 			textForTag.append(prefix);
 			words[i] = spellCorrector.correctThisWord(words[i],
-					SymSpell.LANGUAGE,false);
+					SymSpell.LANGUAGE, false);
 			textForTag.append(words[i]);
 			prefix = " ";
 		}

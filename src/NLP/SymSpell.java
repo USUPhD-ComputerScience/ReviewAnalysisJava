@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -40,39 +41,47 @@ public class SymSpell implements Serializable {
 	public static final String LANGUAGE = "en";
 	private static SymSpell instance = null;
 
+	private HashSet<String> blackList = new HashSet<>();
+
 	public static SymSpell getInstance() {
 		if (instance == null) {
-//			File fcheckExist = new File(FILENAME);
+			// File fcheckExist = new File(FILENAME);
 			boolean newSym = false;
-//			if (fcheckExist.exists() && !fcheckExist.isDirectory()) {
-//				System.err.print(">>Read SymSpell data from file.");
-//				FileInputStream fin;
-//				try {
-//					fin = new FileInputStream(FILENAME);
-//					ObjectInputStream oos = new ObjectInputStream(fin);
-//					long startTime = System.nanoTime();
-//					instance = (SymSpell) oos.readObject();
-//					System.out
-//							.println(" -> Done in "
-//									+ ((double) (System.nanoTime() - startTime) / 1000000 / 1000)
-//									+ " seconds");
-//				} catch (FileNotFoundException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//					newSym = true;
-//				} catch (ClassNotFoundException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//					newSym = true;
-//				} catch (IOException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//					newSym = true;
-//				}
-//			} else
-				newSym = true;
+			// if (fcheckExist.exists() && !fcheckExist.isDirectory()) {
+			// System.err.print(">>Read SymSpell data from file.");
+			// FileInputStream fin;
+			// try {
+			// fin = new FileInputStream(FILENAME);
+			// ObjectInputStream oos = new ObjectInputStream(fin);
+			// long startTime = System.nanoTime();
+			// instance = (SymSpell) oos.readObject();
+			// System.out
+			// .println(" -> Done in "
+			// + ((double) (System.nanoTime() - startTime) / 1000000 / 1000)
+			// + " seconds");
+			// } catch (FileNotFoundException e) {
+			// // TODO Auto-generated catch block
+			// e.printStackTrace();
+			// newSym = true;
+			// } catch (ClassNotFoundException e) {
+			// // TODO Auto-generated catch block
+			// e.printStackTrace();
+			// newSym = true;
+			// } catch (IOException e) {
+			// // TODO Auto-generated catch block
+			// e.printStackTrace();
+			// newSym = true;
+			// }
+			// } else
+			newSym = true;
 			if (newSym) {
 				instance = new SymSpell();
+				try {
+					loadBlackList(instance.blackList, new File("blackList.txt"));
+				} catch (FileNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				instance.createDictionary("\\dictionary\\improvised\\", "en",
 						instance.dictionary);
 				instance.createDictionary("\\dictionary\\baseWord\\", "en",
@@ -80,6 +89,10 @@ public class SymSpell implements Serializable {
 			}
 		}
 		return instance;
+	}
+
+	public HashSet<String> getBlackList() {
+		return blackList;
 	}
 
 	private SymSpell() {
@@ -252,7 +265,7 @@ public class SymSpell implements Serializable {
 						for (String key : parseWords(br.nextLine())) {
 							if (key.length() < 3)
 								continue;
-							if (createDictionaryEntry(key, language,dictionary))
+							if (createDictionaryEntry(key, language, dictionary))
 								wordCount++;
 						}
 					}
@@ -279,15 +292,15 @@ public class SymSpell implements Serializable {
 				+ dictionary.size() + " entries, for edit distance="
 				+ editDistanceMax);
 		// train();
-//		System.out.println(">>Writing SymSpell data to file..");
-//		try {
-//			FileOutputStream fout = new FileOutputStream(FILENAME);
-//			ObjectOutputStream oos = new ObjectOutputStream(fout);
-//			oos.writeObject(instance);
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+		// System.out.println(">>Writing SymSpell data to file..");
+		// try {
+		// FileOutputStream fout = new FileOutputStream(FILENAME);
+		// ObjectOutputStream oos = new ObjectOutputStream(fout);
+		// oos.writeObject(instance);
+		// } catch (IOException e) {
+		// // TODO Auto-generated catch block
+		// e.printStackTrace();
+		// }
 	}
 
 	private void train(Map<String, DictionaryItem> dictionary) {
@@ -296,7 +309,7 @@ public class SymSpell implements Serializable {
 			System.err.println("File not found: " + TRAINDIRECTORY);
 			return;
 		}
-		
+
 		System.out.println("Training dictionary ...");
 		long wordCount = 0;
 		Scanner br = null;
@@ -309,7 +322,8 @@ public class SymSpell implements Serializable {
 						for (String key : parseWords(br.nextLine())) {
 							DictionaryItem value = dictionary.get(key);
 							if (value != null)
-								if (createDictionaryEntry(key, LANGUAGE,dictionary))
+								if (createDictionaryEntry(key, LANGUAGE,
+										dictionary))
 									wordCount++;
 						}
 					}
@@ -429,6 +443,15 @@ public class SymSpell implements Serializable {
 			}
 			return 0;
 		}
+	}
+
+	private static void loadBlackList(HashSet<String> blackList, File file)
+			throws FileNotFoundException {
+		// TODO Auto-generated method stub
+		Scanner br = new Scanner(new FileReader(file));
+		while (br.hasNext())
+			blackList.add(br.next().toLowerCase());
+		br.close();
 	}
 
 	private List<SuggestItem> lookup(String input, String language,
@@ -596,9 +619,10 @@ public class SymSpell implements Serializable {
 		// check in dictionary for existence and frequency; sort by edit
 		// distance, then by word frequency
 		if (isBase)
-		suggestions = lookup(input, language, editDistanceMax,baseDictionary);
+			suggestions = lookup(input, language, editDistanceMax,
+					baseDictionary);
 		else
-			suggestions = lookup(input, language, editDistanceMax,dictionary);
+			suggestions = lookup(input, language, editDistanceMax, dictionary);
 
 		// display term and frequency
 		if (suggestions.size() == 0) {
@@ -645,7 +669,7 @@ public class SymSpell implements Serializable {
 		while (true) {
 			System.out.println("Word to correct: ");
 			String word = in.next();
-			symSpell.correct(word, "en",true);
+			symSpell.correct(word, "en", true);
 		}
 	}
 }
