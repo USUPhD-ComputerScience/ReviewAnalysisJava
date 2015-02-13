@@ -1,7 +1,19 @@
+'ve,have
+'re,are
+i'm,i am
+you're,you are
+we're,we are
+i've,i have
+we've,we have
+you've,you have
 usefull,useful
 excelent,excellent
 helpfull,helpful
 dosent,doesn't
+distortioned,distorted
+adcited,addicted
+barecode,barcode
+awesomeeeeeeeee,awesome
 frnds,friends
 appp,app
 watsapp,whatsapp
@@ -298,12 +310,21 @@ easyer,easier
 footalk,footalk
 bcause,because
 terible,terrible
+mototola,motorola
+fitures,features
+functionallity,functionallity
+upgrated,upgraded
+androidone,android one
+shittist,shittiest
 usfull,useful
 gooddd,good
+eveytime,everytime
 veryyyy,very
 owsom,awesome
 wowwwww,wow
 hihihi,hihi
+eventhuough,even though
+connectuon,connection
 niceeeeee,nice
 virsion,version
 optimised,optimized

@@ -43,6 +43,40 @@ public class SymSpell implements Serializable {
 
 	private HashSet<String> blackList = new HashSet<>();
 
+	private HashSet<String> rawDictionary = new HashSet<>();
+	private HashMap<String, String> wordMapper = new HashMap<>();
+
+	public String correctWordByMap(String word) {
+		if (wordMapper.containsKey(word))
+			return wordMapper.get(word).intern();
+		return word.intern();
+	}
+	
+	public boolean checkWithDictionary(String word){
+		return rawDictionary.contains(word);
+	}
+	private static void loadDictionary(HashSet<String> dic,
+			File[] fileLists) throws Exception {
+		for (File file : fileLists) {
+			Scanner br = new Scanner(new FileReader(file));
+			while (br.hasNext())
+				dic.add(br.next());
+			br.close();
+		}
+	}
+	private static void loadCorrectionMap(
+			HashMap<String, String> correctionMap, File file)
+			throws FileNotFoundException {
+		// TODO Auto-generated method stub
+		Scanner br = new Scanner(new FileReader(file));
+		while (br.hasNextLine()) {
+			String[] pair = br.nextLine().split(",");
+			if (pair.length == 2)
+				correctionMap.put(pair[0], pair[1]);
+		}
+		br.close();
+	}
+
 	public static SymSpell getInstance() {
 		if (instance == null) {
 			// File fcheckExist = new File(FILENAME);
@@ -82,10 +116,29 @@ public class SymSpell implements Serializable {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
+				try {
+					loadCorrectionMap(instance.wordMapper, new File(
+							"wordMap.txt"));
+					System.out.println("Raw word mapper loaded!!!");
+					loadDictionary(instance.rawDictionary,
+							new File("E:\\dictionary\\improvised\\").listFiles());
+					System.out.println("Raw dictionary loaded!!!");
+				} catch (FileNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				System.out.println(">>Creating improvised full dictionary ...");
 				instance.createDictionary("\\dictionary\\improvised\\", "en",
 						instance.dictionary);
+				System.out.println(">>Creating improvised basic dictionary ...");
 				instance.createDictionary("\\dictionary\\baseWord\\", "en",
 						instance.baseDictionary);
+
+			
+
 			}
 		}
 		return instance;
@@ -253,7 +306,6 @@ public class SymSpell implements Serializable {
 			System.err.println("File not found: " + corpus);
 			return;
 		}
-		System.out.println("Creating dictionary ...");
 		long wordCount = 0;
 		Scanner br = null;
 		try {
@@ -448,6 +500,7 @@ public class SymSpell implements Serializable {
 	private static void loadBlackList(HashSet<String> blackList, File file)
 			throws FileNotFoundException {
 		// TODO Auto-generated method stub
+		System.out.println(">>Loading Black List of Words");
 		Scanner br = new Scanner(new FileReader(file));
 		while (br.hasNext())
 			blackList.add(br.next().toLowerCase());

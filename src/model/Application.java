@@ -48,9 +48,9 @@ public class Application implements Serializable {
 	 * 
 	 */
 	public Review addReview(Review rev) {
-		Review review = reviewMap.get(rev.getReviewId());
+		Review review = reviewMap.get(rev.getReviewId().intern());
 		if (review == null)
-			return reviewMap.put(rev.getReviewId(), rev);
+			return reviewMap.put(rev.getReviewId().intern(), rev);
 		return null;
 	}
 

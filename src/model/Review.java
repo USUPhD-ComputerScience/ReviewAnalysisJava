@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import util.Util;
 import NLP.NatureLanguageProcessor;
 
 public class Review implements Serializable {
@@ -16,7 +17,8 @@ public class Review implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = -720406586403564687L;
-	private List<Sentence> sentenceList;
+	// private List<Sentence> sentenceList;
+	private List<Integer> wordIDList;
 	private Set<Long> pairSet;
 	private int rating;
 
@@ -24,12 +26,50 @@ public class Review implements Serializable {
 		return rating;
 	}
 
-	public void addNewPair(long pair){
+	/**
+	 * Only for constructor. This function break a string into words in 4 steps:
+	 * 
+	 * <pre>
+	 * - Step 1: Lower case
+	 * - Step 2: PoS tagging
+	 * - Step 3: Remove StopWord
+	 * - Step 4: Use Snowball Stemming (Porter 2)
+	 * </pre>
+	 * 
+	 * @param fullSentence
+	 *            - The sentence to extract words from
+	 * @return TRUE if it successfully extracted some words, FALSE otherwise
+	 */
+	private boolean extractWords(String fulltext) {
+		Vocabulary voc = Vocabulary.getInstance();
+		NatureLanguageProcessor nlp = NatureLanguageProcessor.getInstance();
+		wordIDList = new ArrayList<>();
+		List<String> wordList = nlp.extractWordsFromText(fulltext);
+		if (wordList == null)
+			return false;
+		List<String[]> stemmedWordsWithPOS = nlp.stem(nlp
+				.findPosTagAndRemoveStopWords(wordList));
+
+		if (stemmedWordsWithPOS != null) {
+			for (String[] pair : stemmedWordsWithPOS) {
+				if (pair.length < 2)
+					continue;
+				wordIDList.add(voc.addWord(pair[0], pair[1]));
+			}
+		}
+		if (wordIDList.isEmpty())
+			return false;
+		return true;
+	}
+
+	public void addNewPair(long pair) {
 		pairSet.add(pair);
 	}
-	public Set<Long> getPairSet(){
+
+	public Set<Long> getPairSet() {
 		return pairSet;
 	}
+
 	public String getDeviceName() {
 		return deviceName;
 	}
@@ -60,9 +100,10 @@ public class Review implements Serializable {
 		deviceName = nestedDeviceName;
 		documentVersion = nestedDocumentVersion;
 		creationTime = nestedCreationTime;
-		reviewId = nestedReviewId;
-		extractSentence(NatureLanguageProcessor.getInstance().extractSentence(
-				fullText));
+		reviewId = nestedReviewId.intern();
+		// extractSentence(NatureLanguageProcessor.getInstance().extractSentence(
+		// fullText));
+		extractWords(fullText);
 		application = app;
 		pairSet = new HashSet<>();
 	}
@@ -93,28 +134,27 @@ public class Review implements Serializable {
 	 *            standardized.
 	 * 
 	 */
-	private void extractSentence(String[] sentences) {
-		sentenceList = new ArrayList<>();
-		for (String fullSentence : sentences) {
-			Sentence s = new Sentence(fullSentence);
-			if (!s.getWordIDList().isEmpty())
-				sentenceList.add(s);
-		}
-	}
+	// private void extractSentence(String[] sentences) {
+	// sentenceList = new ArrayList<>();
+	// for (String fullSentence : sentences) {
+	// Sentence s = new Sentence(fullSentence);
+	// if (!s.getWordIDList().isEmpty())
+	// sentenceList.add(s);
+	// }
+	// }
 
 	/**
 	 * 
 	 * @return the list of Sentences
 	 * 
 	 */
-	public List<Sentence> getSentenceList() {
-		return sentenceList;
-	}
+	// public List<Sentence> getSentenceList() {
+	// return sentenceList;
+	// }
 
 	public static class ReviewBuilder {
 		private String nestedText;
 		private int nestedRating;
-		private String nestedTitle;
 		private String nestedDeviceName;
 		private String nestedDocumentVersion;
 		private long nestedCreationTime;
@@ -124,7 +164,6 @@ public class Review implements Serializable {
 		public ReviewBuilder() {
 			nestedText = null;
 			nestedRating = 0;
-			nestedTitle = null;
 			nestedDeviceName = null;
 			nestedDocumentVersion = null;
 			nestedCreationTime = 0;
@@ -137,17 +176,12 @@ public class Review implements Serializable {
 		}
 
 		public ReviewBuilder text(String text) {
-			this.nestedText = text;
+			this.nestedText = text.intern();
 			return this;
 		}
 
 		public ReviewBuilder rating(int rating) {
 			this.nestedRating = rating;
-			return this;
-		}
-
-		public ReviewBuilder title(String title) {
-			this.nestedTitle = title;
 			return this;
 		}
 
@@ -167,17 +201,12 @@ public class Review implements Serializable {
 		}
 
 		public ReviewBuilder reviewId(String reviewID) {
-			this.nestedReviewId = reviewID;
+			this.nestedReviewId = reviewID.intern();
 			return this;
 		}
 
 		public Review createReview() {
-			String fullText = "";
-			if (nestedTitle != null)
-				fullText = nestedTitle + ". " + nestedText;
-			else
-				fullText = nestedText;
-			return new Review(fullText, nestedRating, nestedDeviceName,
+			return new Review(nestedText, nestedRating, nestedDeviceName,
 					nestedDocumentVersion, nestedCreationTime, nestedReviewId,
 					nestedApplication);
 		}
@@ -186,9 +215,29 @@ public class Review implements Serializable {
 	public void writeSentenceToFile(PrintWriter fileWriter, long lastUpdate) {
 		// TODO Auto-generated method stub
 		if (creationTime > lastUpdate)
-			for (Sentence sentence : sentenceList) {
-				fileWriter.println(sentence.toString());
-				// System.out.println(sentence.toString());
+			fileWriter.println(toString());
+	}
+
+	/**
+	 * @return the full review with each word separated by a space
+	 */
+	public String toString() {
+		Vocabulary voc = Vocabulary.getInstance();
+		StringBuilder strBld = new StringBuilder();
+		String prefix = "";
+		for (Integer wordID : wordIDList) {
+			Word w = voc.getWord(wordID);
+			if (w != null) {
+				strBld.append(prefix);
+				strBld.append(w.toString());
+				prefix = " ";
 			}
+		}
+		return strBld.toString();
+	}
+
+	public List<Integer> getWordIDList() {
+		// TODO Auto-generated method stub
+		return wordIDList;
 	}
 }

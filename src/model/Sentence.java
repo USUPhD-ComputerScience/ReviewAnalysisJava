@@ -48,7 +48,7 @@ public class Sentence implements Serializable {
 					continue;
 				if (Util.isNumeric(pair[0]))
 					continue;
-				wordIDList.add(voc.addWord(new Word(pair[0])));
+				wordIDList.add(voc.addWord(pair[0].intern(), pair[1].intern()));
 			}
 		}
 		if (wordIDList.isEmpty())

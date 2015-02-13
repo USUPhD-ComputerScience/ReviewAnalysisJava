@@ -125,6 +125,36 @@ public class NatureLanguageProcessor {
 		return stem(wordList);
 	}
 
+	public List<String> extractWordsFromText(String text) {
+		text = text.toLowerCase();
+		String[] words = text.split("[^a-z']+");
+		SymSpell symspell = SymSpell.getInstance();
+
+		StringBuilder reviewText = new StringBuilder();
+		String prefix = "";
+		for (String word : words) {
+			if (word.equals("null") || word.length() < 1)
+				continue;
+			word = symspell.correctWordByMap(word.intern());
+
+			reviewText.append(prefix + word);
+			prefix = " ";
+		}
+		ArrayList<String> wordList = new ArrayList<>(Arrays.asList(reviewText
+				.toString().split(" ")));
+
+		double legitWord = 0;
+		for (String word : wordList) {
+			if (symspell.checkWithDictionary(word)) {
+				legitWord++;
+			}
+		}
+		double proportion = legitWord / wordList.size();
+		if (proportion < 0.7)
+			return null;
+		return wordList;
+	}
+
 	/**
 	 * This function will stem the words in the input List using Porter2/English
 	 * stemmer and replace the String value of that word with the stemmed
@@ -135,11 +165,12 @@ public class NatureLanguageProcessor {
 	 */
 	public List<String[]> stem(List<String[]> wordList) {
 		List<String[]> results = new ArrayList<>();
+		CustomStemmer stemmer = CustomStemmer.getInstance();
 		for (String[] pair : wordList) {
 			if (pair.length < 2)
 				continue;
 			// System.out.print(count++ + ": " + pair[0]);
-			pair = CustomStemmer.getInstance().stem(pair);
+			pair = stemmer.stem(pair);
 
 			results.add(pair);
 			// System.out.println("-" + pair[0] + "<->" + pair[1]);
@@ -194,6 +225,35 @@ public class NatureLanguageProcessor {
 		// System.out.println(tagged);
 
 		words = tagged.split(" ");
+		// System.out.println("length = " + words.length);
+
+		List<String[]> results = new ArrayList<>();
+		for (int i = 0; i < words.length; i++) {
+			String[] w = words[i].split("_");
+			if (!stopWordSet.contains(w[0]))
+				results.add(w);
+		}
+		return results;
+	}
+
+	public List<String[]> findPosTagAndRemoveStopWords(List<String> wordList) {
+		if (wordList == null)
+			return null;
+		SymSpell spellCorrector = SymSpell.getInstance();
+		StringBuilder textForTag = new StringBuilder();
+		String prefix = "";
+		for (String word : wordList) {
+			textForTag.append(prefix
+					+ spellCorrector.correctThisWord(word, SymSpell.LANGUAGE,
+							false));
+			prefix = " ";
+		}
+		// The tagged string
+		String tagged = PoSTagger.tagString(textForTag.toString());
+		// Output the result
+		// System.out.println(tagged);
+
+		String[] words = tagged.split(" ");
 		// System.out.println("length = " + words.length);
 
 		List<String[]> results = new ArrayList<>();

@@ -27,9 +27,10 @@ public class ApplicationManager implements Serializable {
 	private Set<Application> appSet;
 	private long lastUpdate;
 	private long currentUpdate;
-	public static final String FILENAME = "\\AndroidAnalysis\\ReviewData\\data\\"
+	public static final String FILENAME = main.main.DATA_DIRECTORY
 			+ "applicationsData" + ".ser";
 	private int totalReviewCount;
+
 	public static synchronized ApplicationManager getInstance() {
 		if (instance == null) {
 			File fcheckExist = new File(FILENAME);
@@ -107,20 +108,18 @@ public class ApplicationManager implements Serializable {
 						condition);
 				while (results.next()) {
 					try {
+						String reviewID = results.getString("reviewid");
+						if (app.contains(reviewID))
+							continue;
 						Review.ReviewBuilder reviewBuilder = new Review.ReviewBuilder();
 						long creationTime = results.getLong("creationtime");
 						if (creationTime <= currentUpdate)
 							continue;
-						String[] str = (results.getString("text").split("\t"));
-						String title = results.getString("title");
-						if (str.length > 1) {
-							reviewBuilder.text(str[1]);
-							reviewBuilder.title(str[0]);
-						} else {
-							reviewBuilder.text(str[0]);
-							reviewBuilder.title(title);
-						}
-						String reviewID = results.getString("reviewid");
+						String text = results.getString("text");
+						if (text.indexOf('\t') < 0) // Not from Android Market
+							text = results.getString("title") + "." + text;
+
+						reviewBuilder.text(text);
 						reviewBuilder.reviewId(reviewID);
 						reviewBuilder.deviceName(results.getString("device"));
 						reviewBuilder.documentVersion(results
@@ -128,22 +127,18 @@ public class ApplicationManager implements Serializable {
 						reviewBuilder.rating(results.getInt("rating"));
 						reviewBuilder.creationTime(creationTime);
 						reviewBuilder.application(app);
-						if (!app.contains(reviewID)) {
-							app.addReview(reviewBuilder.createReview());
-							if (thisUpdate < creationTime)
-								thisUpdate = creationTime;
-							count++;
-							if (count % 10000 == 0) {
+						app.addReview(reviewBuilder.createReview());
+						if (thisUpdate < creationTime)
+							thisUpdate = creationTime;
+						count++;
+						if (count % 10000 == 0) {
 
-								long stopTime = System.nanoTime();
-								long duration = stopTime - startTime;
-								startTime = stopTime;
-								System.out.println("Reviews processed: "
-										+ count
-										+ ", time passed since last message: "
-										+ (duration / 1000000)
-										+ " milliseconds");
-							}
+							long stopTime = System.nanoTime();
+							long duration = stopTime - startTime;
+							startTime = stopTime;
+							System.out.println("Reviews processed: " + count
+									+ ", time passed since last message: "
+									+ (duration / 1000000) + " milliseconds");
 						}
 					} catch (SQLException e) {
 						// TODO Auto-generated catch block
@@ -189,8 +184,8 @@ public class ApplicationManager implements Serializable {
 	public long getLastUpdateTime() {
 		return lastUpdate;
 	}
-	
-	public Set<Application> getAppSet(){
+
+	public Set<Application> getAppSet() {
 		return appSet;
 	}
 }

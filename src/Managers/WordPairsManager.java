@@ -27,9 +27,9 @@ public class WordPairsManager implements Serializable {
 	private static final long serialVersionUID = 1598928430921693922L;
 	private static final int WINDOW_SIZE = 5;
 	private static WordPairsManager instance = null;
-	//private Map<PairOfWords, Integer> pairMap;
+	// private Map<PairOfWords, Integer> pairMap;
 	private Map<Long, Integer> pairMap;
-	public static final String FILENAME = "\\AndroidAnalysis\\ReviewData\\data\\"
+	public static final String FILENAME = main.main.DATA_DIRECTORY
 			+ "pairOfWordsData" + ".ser";
 
 	public int getTotalPair() {
@@ -87,31 +87,29 @@ public class WordPairsManager implements Serializable {
 			for (Review review : reviewList) {
 				if (review.getCreationTime() <= appManager.getLastUpdate())
 					continue;
-				List<Sentence> sentenceList = review.getSentenceList();
-				for (Sentence sentence : sentenceList) {
-					List<Integer> wordIDList = sentence.getWordIDList();
-					for (int i = 0; i < wordIDList.size() - 1; i++) {
-						int j = 1;
-						while (j <= WINDOW_SIZE && (i + j) < wordIDList.size()) {
-							int w1 = wordIDList.get(i);
-							int w2 = wordIDList.get(i + j++);
-							if (w1 == w2)
-								continue;
-							count++;
-							long pair = (((long)w1) << 32) | (w2 & 0xffffffffL);
-							//int x = (int)(l >> 32);
-							//int y = (int)l;
-							//PairOfWords pair = new PairOfWords(
-							//		wordIDList.get(i), wordIDList.get(i + j++));
-							Integer pairFreq = pairMap.get(pair);
-							if (pairFreq != null) {
-								//review.addNewPair(pair);
-								pairMap.put(pair, pairFreq++);
-							} else {
-								review.addNewPair(pair);
-								pairMap.put(pair, 1);
-							}
+				List<Integer> wordIDList = review.getWordIDList();
+				for (int i = 0; i < wordIDList.size() - 1; i++) {
+					int j = 1;
+					while (j <= WINDOW_SIZE && (i + j) < wordIDList.size()) {
+						int w1 = wordIDList.get(i);
+						int w2 = wordIDList.get(i + j++);
+						if (w1 == w2)
+							continue;
+						count++;
+						long pair = (((long) w1) << 32) | (w2 & 0xffffffffL);
+						// int x = (int)(l >> 32);
+						// int y = (int)l;
+						// PairOfWords pair = new PairOfWords(
+						// wordIDList.get(i), wordIDList.get(i + j++));
+						Integer pairFreq = pairMap.get(pair);
+						if (pairFreq != null) {
+							// review.addNewPair(pair);
+							pairMap.put(pair, pairFreq++);
+						} else {
+							review.addNewPair(pair);
+							pairMap.put(pair, 1);
 						}
+
 					}
 				}
 			}

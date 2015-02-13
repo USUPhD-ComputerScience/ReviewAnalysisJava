@@ -28,7 +28,7 @@ public class Vocabulary implements Serializable {
 	private List<Word> wordList;
 	private Map<Word, Integer> wordIDMap;
 	private static Vocabulary instance = null;
-	public static final String FILENAME = "\\AndroidAnalysis\\ReviewData\\data\\"
+	public static final String FILENAME = main.main.DATA_DIRECTORY
 			+ "vocabulary" + ".ser";
 
 	public int gettotalWord() {
@@ -128,7 +128,8 @@ public class Vocabulary implements Serializable {
 		try {
 			pw = new PrintWriter(fileName);
 			for (Word word : wordList) {
-				pw.println(word.toString() + "," + word.getCount());
+				pw.println(word.toString() + "," + word.getCount() + ","
+						+ word.getPOSList().toString());
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -158,14 +159,17 @@ public class Vocabulary implements Serializable {
 	 *            - Part-of-Speech tagging for that word. It should be an ID.
 	 * @return the wordID of this word
 	 */
-	public int addWord(Word w2) {
-		Integer id = wordIDMap.get(w2);
+	public int addWord(String text, String POS) {
+		Word word = new Word(text, POS);
+		Integer id = wordIDMap.get(word);
 		if (id == null) {
 			id = wordList.size();
-			wordIDMap.put(w2, id);
-			wordList.add(w2);
+			wordIDMap.put(word, id);
+			wordList.add(word);
 		} else {
-			wordList.get(id).increaseCount();
+			Word w = wordList.get(id);
+			w.increaseCount();
+			w.addPOS(POS);
 		}
 		return id;
 	}
@@ -190,7 +194,7 @@ public class Vocabulary implements Serializable {
 	 * 
 	 */
 	public Word getWord(String word, String POS) {
-		Word w = new Word(word);
+		Word w = new Word(word, POS.intern());
 		Integer id = wordIDMap.get(w);
 		if (id == null)
 			return null;
@@ -215,7 +219,7 @@ public class Vocabulary implements Serializable {
 	 * 
 	 */
 	public int getWordID(String word, String POS) {
-		Word w = new Word(word);
+		Word w = new Word(word, POS.intern());
 		Integer id = wordIDMap.get(w);
 		if (id == null)
 			return -1;

@@ -1,6 +1,9 @@
 package model;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map.Entry;
 
 import Analyzer.Clusterable;
 import NLP.NatureLanguageProcessor;
@@ -15,14 +18,39 @@ public class Word extends Clusterable implements Serializable {
 	private static final long serialVersionUID = -1820812245518387992L;
 	private String word;
 	private int count;
-	//private String POStag;
+	private HashMap<String, Integer> POSList;
 	private int hash;
+	private String POS;
+	private int POSMaxCount = 0;
 
-	public Word(String w) {
+	public HashMap<String,Integer> getPOSList(){
+		return POSList;
+	}
+	public Word(String w, String POS) {
 		word = w.intern();
 		count = 1;
-		//POStag = POS;
+		POSList = new HashMap<>();
+		POSList.put(POS.intern(), 1);
+		POSMaxCount = 1;
+		POS = POS.intern();
 		hash = word.hashCode();
+	}
+
+	public String getPOS() {
+		return POS;
+	}
+
+	public void addPOS(String POSTag) {
+		Integer pos = POSList.get(POSTag);
+		if (pos != null) {
+			POSList.put(POSTag.intern(), ++pos);
+			if (pos > POSMaxCount) {
+				POSMaxCount = pos;
+				POS = POSTag.intern();
+			}
+		} else {
+			POSList.put(POSTag.intern(), 1);
+		}
 	}
 
 	@Override
@@ -42,8 +70,6 @@ public class Word extends Clusterable implements Serializable {
 		return false;
 	}
 
-
-
 	public void increaseCount() {
 		count++;
 	}
@@ -52,7 +78,7 @@ public class Word extends Clusterable implements Serializable {
 		return count;
 	}
 
-	public boolean isEqual(String w2, int POS) {
+	public boolean isEqual(String w2) {
 		if (word.equals(w2))
 			return true;
 		return false;
@@ -80,7 +106,7 @@ public class Word extends Clusterable implements Serializable {
 	@Override
 	public void setChange(boolean isChanged) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override

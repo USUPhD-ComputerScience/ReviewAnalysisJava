@@ -22,7 +22,7 @@ import model.Review;
 import model.Vocabulary;
 
 public class main {
-
+	public static String DATA_DIRECTORY= "\\AndroidAnalysis\\ReviewData\\data\\";
 	public static void main(String[] args) throws ClassNotFoundException,
 			IOException {
 		// TODO Auto-generated method stub
@@ -49,7 +49,7 @@ public class main {
 		System.out.println("-Done");
 		// Vocabulary.getInstance().clusterWords();
 		Vocabulary.getInstance().writeWordsToFile(
-				"\\AndroidAnalysis\\ReviewData\\data\\word.csv");
+				DATA_DIRECTORY+"word.csv");
 		close(ApplicationManager.FILENAME, Vocabulary.FILENAME,
 				WordPairsManager.FILENAME);
 	}
@@ -62,7 +62,7 @@ public class main {
 
 	private static void close(String appManagerFile, String vocFile,
 			String pairsFile) throws IOException {
-		writeSentenceToFile("\\AndroidAnalysis\\ReviewData\\data\\reviewDataSet.txt");
+		writeSentenceToFile(DATA_DIRECTORY+"reviewDataSet.txt");
 		// write application manager (all apps, reviews, sentences)
 		System.err.println(">>Write Application Manager object to file:"
 				+ appManagerFile);

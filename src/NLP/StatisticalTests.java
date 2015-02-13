@@ -30,7 +30,7 @@ public class StatisticalTests {
 
 		PrintWriter pw = null;
 		try {
-			pw = new PrintWriter(new FileWriter("ttest.csv"));
+			pw = new PrintWriter(new FileWriter(main.main.DATA_DIRECTORY+"ttest.csv"));
 			for (Entry<Long, Integer> entry : bigramMap.entrySet()) {
 				long w1w2 = entry.getKey();
 				int w1 = (int) (w1w2 >> 32);
@@ -66,7 +66,6 @@ public class StatisticalTests {
 	public static void testLikelyHoodRatio(WordPairsManager bigramVoc,
 			Vocabulary wordVoc, double confidentChiSquare) {
 		Map<Long, Integer> bigramMap = bigramVoc.getPairMap();
-		int totalPair = bigramVoc.getTotalPair();
 		int totalWord = wordVoc.gettotalWord();
 		double p = 0;
 		double p1 = 0;
@@ -74,7 +73,7 @@ public class StatisticalTests {
 		double logLikelyHood = 0;
 		PrintWriter pw = null;
 		try {
-			pw = new PrintWriter(new FileWriter("likelyHoodRatio.csv"));
+			pw = new PrintWriter(new FileWriter(main.main.DATA_DIRECTORY+"likelyHoodRatio.csv"));
 			for (Entry<Long, Integer> entry : bigramMap.entrySet()) {
 				long w1w2 = entry.getKey();
 				int w1 = (int) (w1w2 >> 32);
