@@ -83,6 +83,7 @@ public class main {
 		fout = new FileOutputStream(pairsFile);
 		oos = new ObjectOutputStream(fout);
 		oos.writeObject(wpm);
+		WordPairsManager.getInstance().writePair(DATA_DIRECTORY+"pairs.csv");
 	}
 
 	private static void readReviews() {

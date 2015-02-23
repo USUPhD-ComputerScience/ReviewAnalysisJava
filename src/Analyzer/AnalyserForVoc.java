@@ -17,6 +17,7 @@ import java.util.Collections;
 
 import org.json.*;
 
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,10 +38,27 @@ import NLP.SymSpell;
 public class AnalyserForVoc {
 	private static final String URBAN_DIC_API = "http://api.urbandictionary.com/v0/define?term=";
 
+	private static final HashMap<String, String[]> correctionMap = new HashMap<>();
+
+	private static void loadCorrectionMap(File file)
+			throws FileNotFoundException {
+		// TODO Auto-generated method stub
+		Scanner br = new Scanner(new FileReader(file));
+		while (br.hasNextLine()) {
+			String[] pair = br.nextLine().split(",");
+			if (pair.length == 2)
+				correctionMap.put(pair[0], pair[1].split(" "));
+
+		}
+		br.close();
+	}
+
 	public static void main(String[] args) throws Throwable {
-		HashSet<String> blackList = new HashSet<>();
-		loadBlackList(blackList, new File("blackList.txt"));
+		// HashSet<String> blackList = new HashSet<>();
+		// loadBlackList(blackList, new File("blackList.txt"));
 		HashMap<String, Integer> inWordCount = new HashMap<>();
+		loadCorrectionMap(new File("E:\\dictionary\\Map\\wordMapper.txt"));
+		System.out.println("Word Mapper loaded!!!");
 		loadDictionary(inWordCount,
 				new File("E:\\dictionary\\improvised\\").listFiles());
 		System.out.println("Dictionary loaded!!!");
@@ -54,32 +72,50 @@ public class AnalyserForVoc {
 		ResultSet results;
 		results = db.select(PostgreSQLConnector.REVIEWS_TABLE, fields, null);
 		while (results.next()) {
+			count++;
 			String text = results.getString("text");
 			if (text.indexOf('\t') < 0) // Not from Android Market
 				text = results.getString("title") + "." + text;
-			count++;
 			text = text.toLowerCase();
 			String[] words = text.split("[^a-z']+");
-			boolean ignore = false;
+
+			ArrayList<String> wordList = new ArrayList<>();
 			for (String word : words) {
-				if (blackList.contains(word))
-					ignore = true;
-			}
-			if (ignore)
-				continue;
-			for (String word : words) {
-				if (word.length() < 2)
+				if (word.equals("null") || word.length() < 2)
 					continue;
-				Integer wCount = inWordCount.get(word);
-				if (wCount != null)
-					inWordCount.put(word, wCount + 1); // in dictionary
-				else {
-					wCount = outWordCount.get(word);
-					if (wCount == null) // out of voc
-						wCount = 0;
-					outWordCount.put(word, wCount + 1);
-				}
+				String[] wordarray = correctionMap.get(word);
+				if (wordarray != null)
+					wordList.addAll(Arrays.asList(wordarray));
+				else
+					wordList.add(word);
 			}
+			double totalScore = 0, goodScore = 0;
+			for (String word : wordList) {
+				Integer wCount = inWordCount.get(word);
+				double score = 1.0;
+				if (wCount != null) {
+					// score /= Math.log(wCount);
+					goodScore += score;
+				}
+
+				totalScore += score;
+			}
+			double proportion = goodScore / totalScore;
+
+			if (proportion > 0.5)
+				for (String word : wordList) {
+					if (word.length() < 2)
+						continue;
+					Integer wCount = inWordCount.get(word);
+					if (wCount != null)
+						inWordCount.put(word, wCount + 1); // in dictionary
+					else {
+						wCount = outWordCount.get(word);
+						if (wCount == null) // out of voc
+							wCount = 0;
+						outWordCount.put(word, wCount + 1);
+					}
+				}
 
 			if (count % 10000 == 0) {
 				long stopTime = System.nanoTime();
@@ -94,8 +130,14 @@ public class AnalyserForVoc {
 
 		db.close();
 
-		writeToFile(inWordCount, "InWordCount", 1, false);
-		writeToFile(outWordCount, "OutWordCount", 10, true);
+		writeToFile(
+				inWordCount,
+				"E:\\AndroidAnalysis\\ReviewData\\dictionaryProcessing\\InWordCount",
+				1, false);
+		writeToFile(
+				outWordCount,
+				"E:\\AndroidAnalysis\\ReviewData\\dictionaryProcessing\\OutWordCount",
+				10, false);
 		System.out.println("Done!!!");
 	}
 
@@ -146,8 +188,12 @@ public class AnalyserForVoc {
 										SymSpell.LANGUAGE, false));
 					}
 				}
-			} else if (count >= minCount)
-				pwDict.println(entry.getKey() + "," + count);
+			} else if (count >= minCount) {
+
+				String w = entry.getKey();
+				pwDict.println(w + "," + count + ","
+						+ symspell.correctThisWord(w, SymSpell.LANGUAGE, false));
+			}
 		}
 		pwDict.close();
 	}

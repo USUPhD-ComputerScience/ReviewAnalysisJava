@@ -1,12 +1,15 @@
 package NLP;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Scanner;
 import java.util.Set;
 
 import model.Word;
@@ -28,20 +31,42 @@ public class NatureLanguageProcessor {
 	private Set<String> stopWordSet;
 	private static NatureLanguageProcessor instance = null;
 	MaxentTagger PoSTagger;
+	private static final HashMap<String, Integer> realDictionary = new HashMap<>();
+	private static final HashMap<String, String[]> correctionMap = new HashMap<>();
 
 	public static synchronized NatureLanguageProcessor getInstance() {
 		if (instance == null)
 			instance = new NatureLanguageProcessor();
 		return instance;
 	}
+	private static void loadCorrectionMap(File file)
+			throws FileNotFoundException {
+		// TODO Auto-generated method stub
+		Scanner br = new Scanner(new FileReader(file));
+		while (br.hasNextLine()) {
+			String[] pair = br.nextLine().split(",");
+			if (pair.length == 2)
+				correctionMap.put(pair[0], pair[1].split(" "));
 
+		}
+		br.close();
+	}
+	private static void loadDictionary(File[] fileLists) throws Exception {
+		for (File file : fileLists) {
+			Scanner br = new Scanner(new FileReader(file));
+			while (br.hasNext())
+				realDictionary.put(br.next(), 0);
+			br.close();
+		}
+	}
 	private NatureLanguageProcessor() {
 		readStopWordsFromFile();
 		PoSTagger = new MaxentTagger("lib/english-left3words-distsim.tagger");
 		try {
+			loadCorrectionMap(new File("E:\\dictionary\\Map\\wordMapper.txt"));
+			loadDictionary(new File("E:\\dictionary\\improvised\\").listFiles());
 			Porter2StemmerInit();
-		} catch (ClassNotFoundException | InstantiationException
-				| IllegalAccessException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -128,30 +153,39 @@ public class NatureLanguageProcessor {
 	public List<String> extractWordsFromText(String text) {
 		text = text.toLowerCase();
 		String[] words = text.split("[^a-z']+");
-		SymSpell symspell = SymSpell.getInstance();
-
-		StringBuilder reviewText = new StringBuilder();
-		String prefix = "";
+		//SymSpell symspell = SymSpell.getInstance();
+		ArrayList<String> wordList = new ArrayList<>();
 		for (String word : words) {
-			if (word.equals("null") || word.length() < 1)
+			if (word.equals("null") || word.length() < 2)
 				continue;
-			word = symspell.correctWordByMap(word.intern());
 
-			reviewText.append(prefix + word);
-			prefix = " ";
+			String[] wordarray = correctionMap.get(word);
+			if (wordarray != null)
+				wordList.addAll(Arrays.asList(wordarray));
+			else
+				wordList.add(word);
 		}
-		ArrayList<String> wordList = new ArrayList<>(Arrays.asList(reviewText
-				.toString().split(" ")));
-
-		double legitWord = 0;
+		double totalScore = 0, bigramScore = 0, unigramScore = 0;
+		boolean previousInDic = false;
 		for (String word : wordList) {
-			if (symspell.checkWithDictionary(word)) {
-				legitWord++;
-			}
+			Integer wCount = realDictionary.get(word);
+			double score = 1.0;
+			if (wCount != null) {
+				// score /= Math.log(wCount);
+				unigramScore += score;
+				if (previousInDic)
+					bigramScore += score;
+				previousInDic = true;
+			} else
+				previousInDic = false;
+
+			totalScore += score;
 		}
-		double proportion = legitWord / wordList.size();
-		if (proportion < 0.7)
+		double biproportion = bigramScore / totalScore;
+		double uniproportion = unigramScore / totalScore;
+		if (biproportion < 0.4 && uniproportion < 0.5)
 			return null;
+		
 		return wordList;
 	}
 

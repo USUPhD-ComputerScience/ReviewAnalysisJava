@@ -9,7 +9,7 @@ you've,you have
 usefull,useful
 excelent,excellent
 helpfull,helpful
-dosent,doesn't
+dosent,does not
 distortioned,distorted
 adcited,addicted
 barecode,barcode
@@ -79,7 +79,7 @@ somthing,something
 boooo,boo
 thiss,this
 messaged,messaged
-dosen't,doesn't
+dosen't,does not
 ughhh,ugh
 emailing,emailing
 itttt,it
@@ -111,7 +111,7 @@ goooooooood,good
 gpx,gpx
 apppp,app
 beter,better
-doesn,doesn't
+doesn,does not
 acess,access
 cooooool,cool
 unistalling,uninstalling
@@ -120,12 +120,12 @@ ittttt,it
 stil,still
 aplicacion,application
 dwnload,download
-itll,it'll
+itll,it will
 luved,loved
 comunicate,communicate
 unstall,install
 scrollable,scrollable
-doesent,doesn't
+doesent,does not
 intagram,intasgram
 lovd,love
 eror,error
@@ -220,7 +220,6 @@ toooooo,too
 ayaw,ayaw
 elix,elixir
 beacause,because
-'',''
 galexy,galaxy
 okok,ok
 gudd,good
@@ -228,7 +227,7 @@ excilent,excellent
 cking,fucking
 istagram,instagram
 alll,all
-dsnt,doesn't
+dsnt,does not
 memorized,memorized
 greattt,great
 wooooow,wow
@@ -312,9 +311,25 @@ bcause,because
 terible,terrible
 mototola,motorola
 fitures,features
-functionallity,functionallity
+functionallity,functionality
+downliad,download
 upgrated,upgraded
 androidone,android one
+tranlate,translate
+awessome,awesome
+awweeeeessssoooomeeee,awesome
+pefect,perfect
+faild,failed
+shuting,shutting
+like't,like it
+honourable,honorable
+messengar,messenger
+awsoooooome,awesome
+sooooo,so
+sarvice,service
+wallpappers,wallpapers
+doit,do it
+shoooot,shoot
 shittist,shittiest
 usfull,useful
 gooddd,good
@@ -392,7 +407,7 @@ discription,description
 paychex,paycheck
 nicw,nice
 divice,divide
-i',i'
+i',i
 looooooove,love
 aewsome,awesome
 coolll,cool
@@ -427,7 +442,7 @@ oooooo,ooooooo
 baddd,bad
 awesomw,awesome
 louncher,launcher
-didn,didn't
+didn,did not
 yayyy,yay
 recognising,recognizing
 meee,me

@@ -1,0 +1,3 @@
+[a-z]+[qwrtpdfghjklzxcvbnm]s\r\n
+[a-z]+[^yuoea]es\r\n
+[a-z]+[^yuoea]ed\r\n

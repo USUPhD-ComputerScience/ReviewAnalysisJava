@@ -41,10 +41,10 @@ public class NewVocAnalyser {
 	private static final HashMap<String, String[]> correctionMap = new HashMap<>();
 
 	public static void main(String[] args) throws Throwable {
-		loadCorrectionMap(new File("wordMap.txt"));
+		loadCorrectionMap(new File("E:\\dictionary\\Map\\wordMapper.txt"));
 		loadDictionary(new File("E:\\dictionary\\improvised\\").listFiles());
 		System.out.println("Dictionary loaded!!!");
-		countWord();
+		// countWord();
 		System.out.println("Done counting words!!!");
 		filterReview();
 		System.out.println("Done filtering bad reviews!!!");
@@ -54,24 +54,26 @@ public class NewVocAnalyser {
 		long startTime = System.nanoTime();
 		int count = 0;
 
-		PostgreSQLConnector db = new PostgreSQLConnector(PostgreSQLConnector.DBLOGIN,
-				PostgreSQLConnector.DBPASSWORD, PostgreSQLConnector.REVIEWDB);
+		PostgreSQLConnector db = new PostgreSQLConnector(
+				PostgreSQLConnector.DBLOGIN, PostgreSQLConnector.DBPASSWORD,
+				PostgreSQLConnector.REVIEWDB);
 		String fields[] = { "title", "text" };
 		ResultSet results;
 		results = db.select(PostgreSQLConnector.REVIEWS_TABLE, fields, null);
 		PrintWriter pw = new PrintWriter(
-				"\\AndroidAnalysis\\ReviewData\\StrangeReviews\\strangeReview.txt");
-		pw.println("count,ratio,sentence");
+				"\\AndroidAnalysis\\ReviewData\\StrangeReviews\\strangeReview.csv");
+		pw.println("count,bi ratio,uni ratio,sentence");
 		while (results.next()) {
 			count++;
 			String text = results.getString("text");
 			if (text.indexOf('\t') < 0) // Not from Android Market
-				text = results.getString("title") + "." + text;		
+				text = results.getString("title") + "." + text;
 			text = text.toLowerCase();
 			String[] words = text.split("[^a-z']+");
+
 			ArrayList<String> wordList = new ArrayList<>();
 			for (String word : words) {
-				if (word.equals("null") || word.length() < 1)
+				if (word.equals("null") || word.length() < 2)
 					continue;
 
 				String[] wordarray = correctionMap.get(word);
@@ -80,21 +82,28 @@ public class NewVocAnalyser {
 				else
 					wordList.add(word);
 			}
-			double totalScore = 0, goodScore = 0;
+			double totalScore = 0, bigramScore = 0, unigramScore = 0;
+			boolean previousInDic = false;
 			for (String word : wordList) {
 				Integer wCount = inWordCount.get(word);
 				double score = 1.0;
 				if (wCount != null) {
-					score /= Math.log(wCount);
-					goodScore += score;
-				}
-				
+					// score /= Math.log(wCount);
+					unigramScore += score;
+					if (previousInDic)
+						bigramScore += score;
+					previousInDic = true;
+				} else
+					previousInDic = false;
+
 				totalScore += score;
 			}
-			double proportion = goodScore / totalScore;
-			if (proportion < 0.5)
-				pw.println(wordList.size() + "," + proportion + ","
-						+ "\"" + wordList.toString() + "\"" );
+			double biproportion = bigramScore / totalScore;
+			double uniproportion = unigramScore / totalScore;
+			if (biproportion < 0.4 && uniproportion < 0.5)
+				pw.println(wordList.size() + "," + biproportion + ","
+						+ uniproportion + "," + "\"" + wordList.toString()
+						+ "\"");
 
 			if (count % 10000 == 0) {
 				long stopTime = System.nanoTime();
@@ -127,7 +136,7 @@ public class NewVocAnalyser {
 			String[] words = text.split("[^a-z']+");
 			ArrayList<String> wordList = new ArrayList<>();
 			for (String word : words) {
-				if (word.equals("null") || word.length() < 1)
+				if (word.equals("null") || word.length() < 2)
 					continue;
 
 				String[] wordarray = correctionMap.get(word);

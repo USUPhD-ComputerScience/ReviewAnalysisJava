@@ -3,20 +3,25 @@ package Managers;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import NLP.StatisticalTests;
 import model.Application;
 import model.Review;
 import model.Sentence;
+import model.Vocabulary;
 import model.Word;
 
 public class WordPairsManager implements Serializable {
@@ -104,7 +109,7 @@ public class WordPairsManager implements Serializable {
 						Integer pairFreq = pairMap.get(pair);
 						if (pairFreq != null) {
 							// review.addNewPair(pair);
-							pairMap.put(pair, pairFreq++);
+							pairMap.put(pair, ++pairFreq);
 						} else {
 							review.addNewPair(pair);
 							pairMap.put(pair, 1);
@@ -116,5 +121,32 @@ public class WordPairsManager implements Serializable {
 		}
 		System.out.println("New pairs of Word extracted: " + count);
 		return pairMap.size();
+	}
+
+	public void writePair(String fileName) {
+		System.err.println(">>Write sentences to file for Word2Vec: "
+				+ fileName);
+		ApplicationManager appManager = ApplicationManager.getInstance();
+		Vocabulary voc = Vocabulary.getInstance();
+		PrintWriter pw = null;
+		LinkedHashMap<Long, Integer> orderedPairs = new LinkedHashMap<Long, Integer>();
+		orderedPairs = StatisticalTests.sortHashMapByValues(pairMap, false);
+		try {
+			pw = new PrintWriter(new FileWriter(fileName, true));
+			for (Entry<Long, Integer> entry : orderedPairs.entrySet()) {
+				long w1w2 = entry.getKey();
+				int w1 = (int) (w1w2 >> 32);
+				int w2 = (int) w1w2;
+				pw.println(voc.getWord(w1).toString() + " "
+						+ voc.getWord(w2).toString() + "," + entry.getValue());
+			}
+			// appManager.writeSentenceToFile(pw);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			if (pw != null)
+				pw.close();
+		}
 	}
 }

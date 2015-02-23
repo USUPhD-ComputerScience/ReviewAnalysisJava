@@ -34,7 +34,7 @@ import Managers.ApplicationManager;
 
 public class ReportWord {
 	public static void main(String[] args) throws Throwable {
-		report("oooooo");
+		report("peopling");
 	}
 	public static void report(String word) throws Throwable {
 		PostgreSQLConnector db = null;
@@ -42,7 +42,7 @@ public class ReportWord {
 		long startTime = System.nanoTime();
 		db = new PostgreSQLConnector(PostgreSQLConnector.DBLOGIN,
 				PostgreSQLConnector.DBPASSWORD, PostgreSQLConnector.REVIEWDB);
-		String fields[] = { "title", "text" };
+		String fields[] = { "title", "text" ,"appid"};
 		ResultSet results;
 		results = db.select(PostgreSQLConnector.REVIEWS_TABLE, fields, null);
 		PrintWriter pw = new PrintWriter("\\AndroidAnalysis\\ReviewData\\Strangeword\\" + word + "_Review.txt");
@@ -51,8 +51,8 @@ public class ReportWord {
 			if (text.indexOf('\t') < 0) // Not from Android Market
 				text = results.getString("title") + "." + text;
 			count++;
-			text = text.toLowerCase();
-			String[] words = text.split("[^a-z']+");
+			String lwctext = text.toLowerCase();
+			String[] words = lwctext.split("[^a-z']+");
 			
 			boolean contain = false;
 			for (String temp : words) {
@@ -63,6 +63,8 @@ public class ReportWord {
 			}
 			
 			if (contain) {
+				pw.print(results.getInt("appid")+" ");
+				pw.println(text);
 				for (int i = 0; i < words.length; i++) {
 					if (words[i].length() <= 0) continue;
 					if (i > 0)
