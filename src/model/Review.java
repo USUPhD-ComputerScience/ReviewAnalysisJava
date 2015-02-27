@@ -18,7 +18,8 @@ public class Review implements Serializable {
 	 */
 	private static final long serialVersionUID = -720406586403564687L;
 	// private List<Sentence> sentenceList;
-	private List<Integer> wordIDList;
+	// private List<Integer> wordIDList;
+	private List<List<Integer>> sentenceList;
 	private Set<Long> pairSet;
 	private int rating;
 
@@ -40,24 +41,30 @@ public class Review implements Serializable {
 	 *            - The sentence to extract words from
 	 * @return TRUE if it successfully extracted some words, FALSE otherwise
 	 */
-	private boolean extractWords(String fulltext) {
+	private boolean extractSentences(String fulltext) {
 		Vocabulary voc = Vocabulary.getInstance();
 		NatureLanguageProcessor nlp = NatureLanguageProcessor.getInstance();
-		wordIDList = new ArrayList<>();
-		List<String> wordList = nlp.extractWordsFromText(fulltext);
-		if (wordList == null)
-			return false;
-		List<String[]> stemmedWordsWithPOS = nlp.stem(nlp
-				.findPosTagAndRemoveStopWords(wordList));
+		sentenceList = new ArrayList<>();
+		String[] rawSentences = nlp.extractSentence(fulltext);
+		for (String sentence : rawSentences) {
+			List<Integer> wordIDList = new ArrayList<>();
+			List<String> wordList = nlp.extractWordsFromText(sentence);
+			if (wordList == null)
+				return false;
+			List<String[]> stemmedWordsWithPOS = nlp.stem(nlp
+					.findPosTagAndRemoveStopWords(wordList));
 
-		if (stemmedWordsWithPOS != null) {
-			for (String[] pair : stemmedWordsWithPOS) {
-				if (pair.length < 2)
-					continue;
-				wordIDList.add(voc.addWord(pair[0], pair[1]));
+			if (stemmedWordsWithPOS != null) {
+				for (String[] pair : stemmedWordsWithPOS) {
+					if (pair.length < 2)
+						continue;
+					wordIDList.add(voc.addWord(pair[0], pair[1]));
+				}
 			}
+			if (!wordIDList.isEmpty())
+				sentenceList.add(wordIDList);
 		}
-		if (wordIDList.isEmpty())
+		if (sentenceList.isEmpty())
 			return false;
 		return true;
 	}
@@ -103,7 +110,7 @@ public class Review implements Serializable {
 		reviewId = nestedReviewId.intern();
 		// extractSentence(NatureLanguageProcessor.getInstance().extractSentence(
 		// fullText));
-		extractWords(fullText);
+		extractSentences(fullText);
 		application = app;
 		pairSet = new HashSet<>();
 	}
@@ -214,8 +221,8 @@ public class Review implements Serializable {
 
 	public void writeSentenceToFile(PrintWriter fileWriter, long lastUpdate) {
 		// TODO Auto-generated method stub
-		if (creationTime > lastUpdate)
-			fileWriter.println(toString());
+		 if (creationTime > lastUpdate)
+		fileWriter.println(toString());
 	}
 
 	/**
@@ -225,19 +232,22 @@ public class Review implements Serializable {
 		Vocabulary voc = Vocabulary.getInstance();
 		StringBuilder strBld = new StringBuilder();
 		String prefix = "";
-		for (Integer wordID : wordIDList) {
-			Word w = voc.getWord(wordID);
-			if (w != null) {
-				strBld.append(prefix);
-				strBld.append(w.toString());
-				prefix = " ";
+		for (List<Integer> sentence : sentenceList) {
+			for (Integer wordID : sentence) {
+				Word w = voc.getWord(wordID);
+				if (w != null) {
+					strBld.append(prefix);
+					strBld.append(w.toString());
+					prefix = " ";
+				}
 			}
+			strBld.append(" ");
 		}
 		return strBld.toString();
 	}
 
-	public List<Integer> getWordIDList() {
+	public List<List<Integer>> getSentenceList() {
 		// TODO Auto-generated method stub
-		return wordIDList;
+		return sentenceList;
 	}
 }

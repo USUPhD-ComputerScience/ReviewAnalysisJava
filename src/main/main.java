@@ -22,7 +22,8 @@ import model.Review;
 import model.Vocabulary;
 
 public class main {
-	public static String DATA_DIRECTORY= "\\AndroidAnalysis\\ReviewData\\data\\";
+	public static String DATA_DIRECTORY = "\\AndroidAnalysis\\ReviewData\\data\\";
+
 	public static void main(String[] args) throws ClassNotFoundException,
 			IOException {
 		// TODO Auto-generated method stub
@@ -43,13 +44,18 @@ public class main {
 		System.out.print("T-Test...");
 		StatisticalTests.getInstance().tTest(WordPairsManager.getInstance(),
 				Vocabulary.getInstance(), 2.576);
+		// StatisticalTests.getInstance()
+		// .testLikelyHoodRatio(WordPairsManager.getInstance(),
+		// Vocabulary.getInstance(), 7.879);
 		StatisticalTests.getInstance()
-				.testLikelyHoodRatio(WordPairsManager.getInstance(),
+				.testLikelyHoodRatioManning(WordPairsManager.getInstance(),
 						Vocabulary.getInstance(), 7.879);
+
+		StatisticalTests.getInstance().testGoogleMetric(
+				WordPairsManager.getInstance(), Vocabulary.getInstance(), 10);
 		System.out.println("-Done");
 		// Vocabulary.getInstance().clusterWords();
-		Vocabulary.getInstance().writeWordsToFile(
-				DATA_DIRECTORY+"word.csv");
+		Vocabulary.getInstance().writeWordsToFile(DATA_DIRECTORY + "word.csv");
 		close(ApplicationManager.FILENAME, Vocabulary.FILENAME,
 				WordPairsManager.FILENAME);
 	}
@@ -62,7 +68,7 @@ public class main {
 
 	private static void close(String appManagerFile, String vocFile,
 			String pairsFile) throws IOException {
-		writeSentenceToFile(DATA_DIRECTORY+"reviewDataSet.txt");
+		writeSentenceToFile(DATA_DIRECTORY + "reviewDataSet.txt");
 		// write application manager (all apps, reviews, sentences)
 		System.err.println(">>Write Application Manager object to file:"
 				+ appManagerFile);
@@ -83,7 +89,7 @@ public class main {
 		fout = new FileOutputStream(pairsFile);
 		oos = new ObjectOutputStream(fout);
 		oos.writeObject(wpm);
-		WordPairsManager.getInstance().writePair(DATA_DIRECTORY+"pairs.csv");
+		// WordPairsManager.getInstance().writePair(DATA_DIRECTORY+"pairs.csv");
 	}
 
 	private static void readReviews() {
@@ -99,9 +105,11 @@ public class main {
 			String fields[] = { "ID", "name" };
 			String condition = null;
 			condition = "count>0";
+			//"name='com.supercell.clashofclans'";;
 			ResultSet results;
 			results = db.select(PostgreSQLConnector.APPID_TABLE, fields,
 					condition);
+			
 			while (results.next()) {
 				String appID = results.getString("name");
 				Integer dbID = results.getInt("ID");
@@ -130,17 +138,22 @@ public class main {
 		System.err.println(">>Write sentences to file for Word2Vec: "
 				+ fileName);
 		ApplicationManager appManager = ApplicationManager.getInstance();
-
+		PostgreSQLConnector db = null;
 		PrintWriter pw = null;
 		try {
+			db = new PostgreSQLConnector(PostgreSQLConnector.DBLOGIN,
+					PostgreSQLConnector.DBPASSWORD,
+					PostgreSQLConnector.REVIEWDB);
 			pw = new PrintWriter(new FileWriter(fileName, true));
-			appManager.writeSentenceToFile(pw);
+			appManager.writeSentenceToFile(pw, db);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {
 			if (pw != null)
 				pw.close();
+			if (db != null)
+				db.close();
 		}
 	}
 

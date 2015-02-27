@@ -3,6 +3,7 @@ package Managers;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -14,6 +15,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -36,6 +38,16 @@ public class WordPairsManager implements Serializable {
 	private Map<Long, Integer> pairMap;
 	public static final String FILENAME = main.main.DATA_DIRECTORY
 			+ "pairOfWordsData" + ".ser";
+	public static final Set<String> posFilterSet = new HashSet<>();
+
+	private static void readPoSFilter(File file) throws FileNotFoundException {
+		// TODO Auto-generated method stub
+		Scanner br = new Scanner(new FileReader(file));
+		while (br.hasNextLine()) {
+			posFilterSet.add(br.nextLine());
+		}
+		br.close();
+	}
 
 	public int getTotalPair() {
 		int count = 0;
@@ -75,6 +87,12 @@ public class WordPairsManager implements Serializable {
 			} else
 				instance = new WordPairsManager();
 		}
+		try {
+			readPoSFilter(new File("lib/posFilter.txt"));
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return instance;
 	}
 
@@ -92,29 +110,32 @@ public class WordPairsManager implements Serializable {
 			for (Review review : reviewList) {
 				if (review.getCreationTime() <= appManager.getLastUpdate())
 					continue;
-				List<Integer> wordIDList = review.getWordIDList();
-				for (int i = 0; i < wordIDList.size() - 1; i++) {
-					int j = 1;
-					while (j <= WINDOW_SIZE && (i + j) < wordIDList.size()) {
-						int w1 = wordIDList.get(i);
-						int w2 = wordIDList.get(i + j++);
-						if (w1 == w2)
-							continue;
-						count++;
-						long pair = (((long) w1) << 32) | (w2 & 0xffffffffL);
-						// int x = (int)(l >> 32);
-						// int y = (int)l;
-						// PairOfWords pair = new PairOfWords(
-						// wordIDList.get(i), wordIDList.get(i + j++));
-						Integer pairFreq = pairMap.get(pair);
-						if (pairFreq != null) {
-							// review.addNewPair(pair);
-							pairMap.put(pair, ++pairFreq);
-						} else {
-							review.addNewPair(pair);
-							pairMap.put(pair, 1);
-						}
+				List<List<Integer>> sentenceList = review.getSentenceList();
+				for (List<Integer> wordIDList : sentenceList) {
+					for (int i = 0; i < wordIDList.size() - 1; i++) {
+						int j = 1;
+						while (j <= WINDOW_SIZE && (i + j) < wordIDList.size()) {
+							int w1 = wordIDList.get(i);
+							int w2 = wordIDList.get(i + j++);
+							if (w1 == w2)
+								continue;
+							count++;
+							long pair = (((long) w1) << 32)
+									| (w2 & 0xffffffffL);
+							// int x = (int)(l >> 32);
+							// int y = (int)l;
+							// PairOfWords pair = new PairOfWords(
+							// wordIDList.get(i), wordIDList.get(i + j++));
+							Integer pairFreq = pairMap.get(pair);
+							if (pairFreq != null) {
+								// review.addNewPair(pair);
+								pairMap.put(pair, ++pairFreq);
+							} else {
+								review.addNewPair(pair);
+								pairMap.put(pair, 1);
+							}
 
+						}
 					}
 				}
 			}
@@ -137,8 +158,11 @@ public class WordPairsManager implements Serializable {
 				long w1w2 = entry.getKey();
 				int w1 = (int) (w1w2 >> 32);
 				int w2 = (int) w1w2;
-				pw.println(voc.getWord(w1).toString() + " "
-						+ voc.getWord(w2).toString() + "," + entry.getValue());
+				Word word1 = voc.getWord(w1);
+				Word word2 = voc.getWord(w2);
+				pw.println(word1.toString() + " " + word2.toString() + ","
+						+ entry.getValue() + "," + word1.getPOS() + " "
+						+ word2.getPOS());
 			}
 			// appManager.writeSentenceToFile(pw);
 		} catch (IOException e) {

@@ -19,6 +19,7 @@ import java.util.Scanner;
 import java.util.Set;
 
 import model.Vocabulary;
+import model.Word;
 import Managers.WordPairsManager;
 
 public class StatisticalTests {
@@ -36,12 +37,15 @@ public class StatisticalTests {
 		Map<Long, Integer> bigramMap = bigramVoc.getPairMap();
 		int totalPair = bigramVoc.getTotalPair();
 		int totalWord = wordVoc.gettotalWord();
-		//double tTest = 0;
+		// double tTest = 0;
 		double h0 = 0;
 		double xBar = 0;
 
 		PrintWriter pw = null;
+		PrintWriter pwIgnored = null;
 		try {
+			pwIgnored = new PrintWriter(new FileWriter(main.main.DATA_DIRECTORY
+					+ "ttest_Ignored.csv"));
 			pw = new PrintWriter(new FileWriter(main.main.DATA_DIRECTORY
 					+ "ttest.csv"));
 			for (Entry<Long, Integer> entry : bigramMap.entrySet()) {
@@ -66,13 +70,72 @@ public class StatisticalTests {
 				double tTest = (o11 - e11) / Math.sqrt(o11);
 
 				if (tTest >= t) {
-					pw.write(wordVoc.getWord(w1).toString());
-					pw.write(" ");
-					pw.write(wordVoc.getWord(w2).toString());
-					pw.write(",");
-					pw.write(entry.getValue() + "," + tTest);
 
-					pw.write('\n');
+					Word word1 = wordVoc.getWord(w1);
+					Word word2 = wordVoc.getWord(w2);
+					String pos = word1.getPOS() + " " + word2.getPOS();
+					if (WordPairsManager.posFilterSet.contains(pos))
+						writeTestResult(pw, word1, word2, o11, tTest);
+					else {
+						writeTestResult(pwIgnored, word1, word2, o11, tTest);
+					}
+
+				}
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if (pw != null)
+			pw.close();
+		if (pwIgnored != null)
+			pw.close();
+
+	}
+
+	public static void writeTestResult(PrintWriter pw, Word w1, Word w2,
+			double pairFreq, double score) {
+		pw.println(w1.toString() + " " + w2.toString() + "," + pairFreq + ","
+				+ score + "," + w1.getPOS() + " " + w2.getPOS());
+
+	}
+
+	public static void testMutualInformation(WordPairsManager bigramVoc,
+			Vocabulary wordVoc, double threshold) {
+		Map<Long, Integer> bigramMap = bigramVoc.getPairMap();
+		double totalWord = wordVoc.gettotalWord();
+		// int totalPair = bigramVoc.getTotalPair();
+		PrintWriter pw = null;
+
+		PrintWriter pwIgnored = null;
+		try {
+			pwIgnored = new PrintWriter(new FileWriter(main.main.DATA_DIRECTORY
+					+ "mutualInformation_Ignored.csv"));
+			pw = new PrintWriter(new FileWriter(main.main.DATA_DIRECTORY
+					+ "mutualInformation.csv"));
+			for (Entry<Long, Integer> entry : bigramMap.entrySet()) {
+				long w1w2 = entry.getKey();
+				int w1 = (int) (w1w2 >> 32);
+				int w2 = (int) w1w2;
+				if (w1 == w2)
+					continue;
+				double o11 = entry.getValue(); // c12
+				double o_1 = wordVoc.getWordCount(w1); // c1
+				double o1_ = wordVoc.getWordCount(w2); // c2
+
+				double e11 = (o1_ * o_1) / totalWord;
+				double mi = Math.log10(o11 / e11);
+
+				if (mi <= threshold || o11 >= 500) {
+
+					Word word1 = wordVoc.getWord(w1);
+					Word word2 = wordVoc.getWord(w2);
+					String pos = word1.getPOS() + " " + word2.getPOS();
+					if (WordPairsManager.posFilterSet.contains(pos))
+						writeTestResult(pw, word1, word2, o11, mi);
+					else {
+						writeTestResult(pwIgnored, word1, word2, o11, mi);
+					}
 				}
 			}
 
@@ -82,15 +145,20 @@ public class StatisticalTests {
 		}
 		if (pw != null)
 			pw.close();
+		if (pwIgnored != null)
+			pwIgnored.close();
 	}
 
 	public static void testLikelyHoodRatio(WordPairsManager bigramVoc,
 			Vocabulary wordVoc, double confidentChiSquare) {
 		Map<Long, Integer> bigramMap = bigramVoc.getPairMap();
 		double totalWord = wordVoc.gettotalWord();
-		// int totalPair = bigramVoc.getTotalPair();
+		int totalPair = bigramVoc.getTotalPair();
 		PrintWriter pw = null;
+		PrintWriter pwIgnored = null;
 		try {
+			pwIgnored = new PrintWriter(new FileWriter(main.main.DATA_DIRECTORY
+					+ "likelyHoodRatio_Ignored.csv"));
 			pw = new PrintWriter(new FileWriter(main.main.DATA_DIRECTORY
 					+ "likelyHoodRatio.csv"));
 			for (Entry<Long, Integer> entry : bigramMap.entrySet()) {
@@ -99,6 +167,7 @@ public class StatisticalTests {
 				int w2 = (int) w1w2;
 				if (w1 == w2)
 					continue;
+
 				double o11 = entry.getValue(); // c12
 				double o_1 = wordVoc.getWordCount(w1); // c1
 				double o1_ = wordVoc.getWordCount(w2); // c2
@@ -125,15 +194,23 @@ public class StatisticalTests {
 				if (o22 == 0)
 					o22++;
 
-				double loglikelihood = 2 * ((o11 * Math.log10(((o11) / e11)))
-						+ (o12 * Math.log10((o12) / e12))
-						+ (o21 * Math.log10(((o21) / e21))) + (o22 * Math
-						.log10(((o22) / e22))));
+				double loglikelihood = 2 * ((o11 * Math.log(((o11) / e11)))
+						+ (o12 * Math.log((o12) / e12))
+						+ (o21 * Math.log(((o21) / e21))) + (o22 * Math
+						.log(((o22) / e22))));
 
-				if (loglikelihood >= confidentChiSquare)
-					pw.println(wordVoc.getWord(w1).toString() + " "
-							+ wordVoc.getWord(w2).toString() + "," + o11 + ","
-							+ loglikelihood);
+				if (loglikelihood >= confidentChiSquare) {
+					Word word1 = wordVoc.getWord(w1);
+					Word word2 = wordVoc.getWord(w2);
+
+					String pos = word1.getPOS() + " " + word2.getPOS();
+					if (WordPairsManager.posFilterSet.contains(pos))
+						writeTestResult(pw, word1, word2, o11, loglikelihood);
+					else {
+						writeTestResult(pwIgnored, word1, word2, o11,
+								loglikelihood);
+					}
+				}
 			}
 
 		} catch (IOException e) {
@@ -142,13 +219,126 @@ public class StatisticalTests {
 		}
 		if (pw != null)
 			pw.close();
+		if (pwIgnored != null)
+			pwIgnored.close();
+	}
+
+	public static void testLikelyHoodRatioManning(WordPairsManager bigramVoc,
+			Vocabulary wordVoc, double confidentChiSquare) {
+		Map<Long, Integer> bigramMap = bigramVoc.getPairMap();
+		double totalWord = wordVoc.gettotalWord();
+		int totalPair = bigramVoc.getTotalPair();
+		PrintWriter pw = null;
+
+		PrintWriter pwIgnored = null;
+		try {
+			pwIgnored = new PrintWriter(new FileWriter(main.main.DATA_DIRECTORY
+					+ "likelyHoodRatioManning_Ignored.csv"));
+			pw = new PrintWriter(new FileWriter(main.main.DATA_DIRECTORY
+					+ "likelyHoodRatioManning.csv"));
+			for (Entry<Long, Integer> entry : bigramMap.entrySet()) {
+				long w1w2 = entry.getKey();
+				int w1 = (int) (w1w2 >> 32);
+				int w2 = (int) w1w2;
+				if (w1 == w2)
+					continue;
+
+				double c12 = entry.getValue(); // c12
+				double c1 = wordVoc.getWordCount(w1); // c1
+				double c2 = wordVoc.getWordCount(w2); // c2
+				if (c12 < 10 || c1 < 10 || c2 < 10)
+					continue;
+				double p = c2 / totalWord;
+				double p1 = c12 / c1;
+				// if (c2 == c12)
+				c2++;
+				c1++;
+				double p2 = (c2 - c12) / (totalWord - c1);
+				double loglikelihood = -2
+						* (logL(c12, c1, p) + logL(c2 - c12, totalWord - c1, p)
+								- logL(c12, c1, p1) - logL(c2 - c12, totalWord
+								- c1, p2));
+				if (loglikelihood >= confidentChiSquare) {
+					Word word1 = wordVoc.getWord(w1);
+					Word word2 = wordVoc.getWord(w2);
+					String pos = word1.getPOS() + " " + word2.getPOS();
+					if (WordPairsManager.posFilterSet.contains(pos))
+						writeTestResult(pw, word1, word2, c12, loglikelihood);
+					else {
+						writeTestResult(pwIgnored, word1, word2, c12,
+								loglikelihood);
+					}
+				}
+			}
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if (pw != null)
+			pw.close();
+		if (pwIgnored != null)
+			pwIgnored.close();
+	}
+
+	public static void testGoogleMetric(WordPairsManager bigramVoc,
+			Vocabulary wordVoc, double threshold) {
+		Map<Long, Integer> bigramMap = bigramVoc.getPairMap();
+		double totalWord = wordVoc.gettotalWord();
+		int totalPair = bigramVoc.getTotalPair();
+		PrintWriter pw = null;
+
+		PrintWriter pwIgnored = null;
+		try {
+			pwIgnored = new PrintWriter(new FileWriter(main.main.DATA_DIRECTORY
+					+ "testGoogleMetric_Ignored.csv"));
+			pw = new PrintWriter(new FileWriter(main.main.DATA_DIRECTORY
+					+ "testGoogleMetric.csv"));
+			for (Entry<Long, Integer> entry : bigramMap.entrySet()) {
+				long w1w2 = entry.getKey();
+				int w1 = (int) (w1w2 >> 32);
+				int w2 = (int) w1w2;
+				if (w1 == w2)
+					continue;
+
+				double c12 = entry.getValue(); // c12
+				double c1 = wordVoc.getWordCount(w1); // c1
+				double c2 = wordVoc.getWordCount(w2); // c2
+				// if (c12 < 10 || c1 < 10 || c2 < 10)
+				// continue;
+				// double p = c2 / totalWord;
+				// double p1 = c12 / c1;
+				// if (c2 == c12)
+				// c2++;
+				// c1++;
+				// double p2 = (c2 - c12) / (totalWord - c1);
+				double googleRatio = (c12 - threshold) / (c1 * c2);
+				if (c12 > 10) {
+					Word word1 = wordVoc.getWord(w1);
+					Word word2 = wordVoc.getWord(w2);
+					String pos = word1.getPOS() + " " + word2.getPOS();
+					if (WordPairsManager.posFilterSet.contains(pos))
+						writeTestResult(pw, word1, word2, c12, googleRatio);
+					else {
+						writeTestResult(pwIgnored, word1, word2, c12,
+								googleRatio);
+					}
+				}
+			}
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if (pw != null)
+			pw.close();
+		if (pwIgnored != null)
+			pwIgnored.close();
 	}
 
 	// Likelihood function
-	private static double L(double k, double n, double x) {
-		double a = Math.pow(x, k);
-		double b = Math.pow(1 - x, n - k);
-		double result = a * b;
+	private static double logL(double k, double n, double x) {
+		double result = k * Math.log(x) + (n - k) * (Math.log(1 - x));
 		return result;
 	}
 
@@ -256,7 +446,7 @@ public class StatisticalTests {
 		tStatistic(mapo11, tStats, textSize);
 		System.out.println("Sorting the results for t statistics... ");
 		LinkedHashMap<String, Double> ordered = new LinkedHashMap<String, Double>();
-		//ordered = sortHashMapByValues(tStats, false);
+		// ordered = sortHashMapByValues(tStats, false);
 		Set ref = ordered.keySet();
 		Iterator it = ref.iterator();
 		int countTop10 = 0;
@@ -275,7 +465,7 @@ public class StatisticalTests {
 		x2score(mapo11, x2scoreStats, textSize);
 		System.out.println("Sorting the results for x2 score... ");
 		LinkedHashMap<String, Double> orderedX2Score = new LinkedHashMap<String, Double>();
-		//orderedX2Score = sortHashMapByValues(x2scoreStats, false);
+		// orderedX2Score = sortHashMapByValues(x2scoreStats, false);
 		Set ref2 = orderedX2Score.keySet();
 		Iterator it2 = ref2.iterator();
 		countTop10 = 0;
@@ -294,7 +484,7 @@ public class StatisticalTests {
 		logRatio(mapo11, logs, textSize);
 		System.out.println("Sorting the results for log likelihood ratios... ");
 		LinkedHashMap<String, Double> orderedLogs = new LinkedHashMap<String, Double>();
-		//orderedLogs = sortHashMapByValues(logs, false);
+		// orderedLogs = sortHashMapByValues(logs, false);
 		Set ref3 = orderedLogs.keySet();
 		Iterator it3 = ref3.iterator();
 		countTop10 = 0;
@@ -316,7 +506,7 @@ public class StatisticalTests {
 		System.out
 				.println("Sorting the results for the pointwise mutual information scores... ");
 		LinkedHashMap<String, Double> orderedPMI = new LinkedHashMap<String, Double>();
-		//orderedPMI = sortHashMapByValues(pmis, false);
+		// orderedPMI = sortHashMapByValues(pmis, false);
 		Set ref4 = orderedPMI.keySet();
 		Iterator it4 = ref4.iterator();
 		countTop10 = 0;

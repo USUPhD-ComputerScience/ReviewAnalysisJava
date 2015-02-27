@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import word2vec.WordVec;
 import edu.stanford.nlp.util.Comparators;
 
 public class KMeanClustering {
@@ -75,19 +76,19 @@ public class KMeanClustering {
 			// Step 2: recalculate centroids
 			for (int k = 0; k < K; k++) {
 				Arrays.fill(centroids[k], 0);
-				int count = 0;
+				//int count = 0;
 				for (int item = 0; item < numItems; item++) {
 					if (itemToCluster[item] == k) {
 						float[] itemVector = itemList.get(item).getVector();
-						count += itemList.get(item).getFrequency();
+						//count += itemList.get(item).getFrequency();
 						for (int j = 0; j < vectorSize; j++) {
 							centroids[k][j] += itemVector[j];
 						}
 					}
 				}
-				for (int j = 0; j < vectorSize; j++) {
-					centroids[k][j] /= (float) count;
-				}
+				//for (int j = 0; j < vectorSize; j++) {
+					//centroids[k][j] /= (float) count;
+				//}
 			}
 		}
 		// order by distance to centroid
@@ -114,6 +115,7 @@ public class KMeanClustering {
 		System.out.println("--Number of Iteration = " + iterator);
 		return clusters;
 	}
+
 
 	public double cosineSimilarityForVectors(float[] vector1, float[] vector2,
 			boolean normalize) {

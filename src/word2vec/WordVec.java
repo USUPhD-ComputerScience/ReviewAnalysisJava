@@ -11,13 +11,15 @@ public class WordVec {
 	private final Map<String, float[]> wordVector;
 	private static WordVec instance = null;
 	private static Map<String, float[]> phraseVector = new HashMap<>();
-	private static final int VECTOR_SIZE = 200;
+	public static final int VECTOR_SIZE = 200;
+	private static final String VECTOR_FILE = main.main.DATA_DIRECTORY
+			+ "v9\\ReviewVectors.txt";
 
 	private WordVec() {
 		wordVector = new HashMap<>();
 		try {
 			System.out.print("Loading Word Vectors");
-			loadTextModel("ReviewVectors.txt");
+			loadTextModel(VECTOR_FILE);
 			System.out.println("-Done!");
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -43,14 +45,15 @@ public class WordVec {
 				for (int i = 0; i < vector.length; i++) {
 					vector[i] += wordvec[i];
 				}
+			} else {
+				return null;
 			}
+
 		}
 		phraseVector.put(phrase, vector);
 
 		return vector;
 	}
-
-
 
 	public double cosineSimilarityForPhrases(String phrase1, String phrase2,
 			boolean normalize) {
@@ -78,9 +81,10 @@ public class WordVec {
 		return wordVector;
 	}
 
-	public float[] getVectorForWord(String word){
+	public float[] getVectorForWord(String word) {
 		return wordVector.get(word);
 	}
+
 	public void loadTextModel(String filename) throws FileNotFoundException {
 		Scanner br = null;
 		try {
@@ -131,23 +135,23 @@ public class WordVec {
 			return (1 + sim / Math.sqrt(square1) / Math.sqrt(square2)) / 2;
 	}
 
-	// public static void main(String[] args) {
-	// WordVec wordvec = new WordVec();
-	// try {
-	// wordvec.loadTextModel("ReviewVectors.txt");
-	// } catch (FileNotFoundException e) {
-	// // TODO Auto-generated catch block
-	// e.printStackTrace();
-	// }
-	// Scanner scanner = new Scanner(System.in);
-	// while(true){
-	// System.out.println("Input your first word:");
-	// String word1 = scanner.next();
-	// System.out.println("Input your second word:");
-	// String word2 = scanner.next();
-	// System.out.println("Similarity = " + wordvec.cosineSimilarity(word1,
-	// word2));
-	// }
-	// }
+	public static void main(String[] args) {
+		WordVec wordvec = new WordVec();
+		try {
+			wordvec.loadTextModel(VECTOR_FILE);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		Scanner scanner = new Scanner(System.in);
+		while (true) {
+			System.out.println("Input your first word:");
+			String word1 = scanner.next().replace(" ", "_");
+			System.out.println("Input your second word:");
+			String word2 = scanner.next().replace(" ", "_");
+			System.out.println("Similarity = "
+					+ wordvec.cosineSimilarityForWords(word1, word2, true));
+		}
+	}
 
 }

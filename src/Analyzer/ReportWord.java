@@ -34,7 +34,7 @@ import Managers.ApplicationManager;
 
 public class ReportWord {
 	public static void main(String[] args) throws Throwable {
-		report("peopling");
+		report("sayee");
 	}
 	public static void report(String word) throws Throwable {
 		PostgreSQLConnector db = null;

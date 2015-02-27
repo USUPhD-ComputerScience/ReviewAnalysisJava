@@ -2,6 +2,8 @@ package model;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -12,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import util.PostgreSQLConnector;
+
 public class Application implements Serializable {
 	/**
 	 * 
@@ -21,7 +25,7 @@ public class Application implements Serializable {
 	private Set<Long> updateDates;
 	private String appID;
 	private int dbID;
-	
+
 	@Override
 	public int hashCode() {
 		return appID.hashCode();
@@ -54,9 +58,35 @@ public class Application implements Serializable {
 		return null;
 	}
 
-	public void writeSentenceToFile(PrintWriter fileWriter, long lastUpdate) {
-		for(Review review: reviewMap.values()){
-			review.writeSentenceToFile(fileWriter, lastUpdate);
+	public void writeSentenceToFile(PrintWriter fileWriter, long lastUpdate,
+			PostgreSQLConnector db) {
+
+		// String fields[] = { "title", "text" };
+		for (Review review : reviewMap.values()) {
+			if (review.getSentenceList().isEmpty())
+				continue;
+			try {
+				review.writeSentenceToFile(fileWriter, lastUpdate);
+				// if (review.getCreationTime() > lastUpdate) {
+				// String condition = "appid=" + this.getDbID()
+				// + " AND reviewid='" + review.getReviewId() + "'";
+				// ResultSet results;
+				// results = db.select(PostgreSQLConnector.REVIEWS_TABLE,
+				// fields,
+				// condition);
+				// while (results.next()) {
+				// String text = results.getString("text");
+				// if (text.indexOf('\t') < 0) // Not from Android Market
+				// text = results.getString("title") + "." + text;
+				// fileWriter.println(text);
+				// break;
+				// }
+				// }
+
+			} catch (Exception e) {
+				System.err.println(e.getMessage());
+			}
+
 		}
 	}
 
@@ -91,8 +121,8 @@ public class Application implements Serializable {
 		updateDates.add(update);
 		return update;
 	}
-	
-	public List<Review> getReviews(){
+
+	public List<Review> getReviews() {
 		return new ArrayList<Review>(reviewMap.values());
 	}
 }

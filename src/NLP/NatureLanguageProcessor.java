@@ -74,10 +74,10 @@ public class NatureLanguageProcessor {
 
 	private void readStopWordsFromFile() {
 		stopWordSet = new HashSet<>();
-		System.err.println(">>Read StopWords from file - english.stop");
+		System.err.println(">>Read StopWords from file - englishImprovised.stop");
 		CSVReader reader = null;
 		try {
-			reader = new CSVReader(new FileReader("lib/english.stop"));
+			reader = new CSVReader(new FileReader("lib/englishImprovised.stop"));
 			String[] row = null;
 			while ((row = reader.readNext()) != null) {
 				stopWordSet.add(row[0]);
@@ -107,8 +107,7 @@ public class NatureLanguageProcessor {
 	 * @return a String array of all the sentences.
 	 */
 	public String[] extractSentence(String text) {
-		text = Util.standardizeText(text);
-		return text.split("\\.");
+		return text.split("\\.+");
 	}
 
 	/**

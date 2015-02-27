@@ -250,19 +250,20 @@ public class SymSpell implements Serializable {
 		boolean result = false;
 		if (key.length() < 3)
 			return result;
-
+		if(key.equals("lenny"))
+			System.out.println();
 		DictionaryItem value;
 		value = dictionary.get(key);
 		if (value != null) {
 			// already exists:
 			// 1. word appears several times
 			// 2. word1==deletes(word2)
-			value.count++;
+			value.count+=1;
 		} else {
 			value = new DictionaryItem();
-			value.count++;
-			dictionary.put(language + key, value);
+			value.count+=1;
 		}
+		dictionary.put(language + key, value);
 
 		// edits/suggestions are created only once, no matter how often word
 		// occurs

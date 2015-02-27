@@ -82,9 +82,9 @@ public class ApplicationManager implements Serializable {
 		return appSet.add(new Application(appID, dbID));
 	}
 
-	public void writeSentenceToFile(PrintWriter fileWriter) {
+	public void writeSentenceToFile(PrintWriter fileWriter,PostgreSQLConnector db ) {
 		for (Application app : appSet) {
-			app.writeSentenceToFile(fileWriter, lastUpdate);
+			app.writeSentenceToFile(fileWriter, lastUpdate,db);
 		}
 	}
 
