@@ -19,7 +19,7 @@ import java.util.Set;
 import edu.stanford.nlp.tagger.maxent.MaxentTagger;
 
 public class CustomStemmer {
-	private static final String FILENAME = "irregularVerbForms.txt";
+	private static final String FILENAME = "lib/irregularVerbForms.txt";
 	private Map<String, String> irregularVerbMap;
 	private static CustomStemmer instance = null;
 	private static final Set<Integer> vowelSet = new HashSet<>(
@@ -414,7 +414,7 @@ public class CustomStemmer {
 			}
 		}
 		result[0] = SymSpell.getInstance().correctThisWord(result[0],
-				SymSpell.LANGUAGE,true);
+				SymSpell.LANGUAGE, true);
 		return result;
 	}
 

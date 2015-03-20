@@ -19,45 +19,66 @@ import java.util.Scanner;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import NLP.NatureLanguageProcessor;
 import NLP.StatisticalTests;
 import model.Application;
 import model.Review;
 import model.Sentence;
 import model.Vocabulary;
 import model.Word;
+import model.WordPair;
 
 public class WordPairsManager implements Serializable {
 
 	/**
 	 * 
 	 */
+	public static final int NOT_OPTION = 2;
+	public static final int TO_OPTION = 1;
 	private static final long serialVersionUID = 1598928430921693922L;
-	private static final int WINDOW_SIZE = 5;
-	private static WordPairsManager instance = null;
-	// private Map<PairOfWords, Integer> pairMap;
-	private Map<Long, Integer> pairMap;
-	public static final String FILENAME = main.main.DATA_DIRECTORY
-			+ "pairOfWordsData" + ".ser";
-	public static final Set<String> posFilterSet = new HashSet<>();
+	public static final int WINDOW_SIZE = 6;
 
-	private static void readPoSFilter(File file) throws FileNotFoundException {
+	private static final ArrayList<Template> templateList = new ArrayList<>();
+
+	private static void readPoSTemplates(File file)
+			throws FileNotFoundException {
 		// TODO Auto-generated method stub
 		Scanner br = new Scanner(new FileReader(file));
 		while (br.hasNextLine()) {
-			posFilterSet.add(br.nextLine());
+			String[] PoSs = br.nextLine().split(" ");
+			if (PoSs.length >= 2)
+				templateList.add(new Template(PoSs));
 		}
 		br.close();
 	}
 
+	private static WordPairsManager instance = null;
+	// private Map<PairOfWords, Integer> pairMap;
+	private Map<WordPair, Integer> pairMap;
+	public static final String FILENAME = main.main.DATA_DIRECTORY
+			+ "pairOfWordsData" + ".ser";
+
+	// public static final Set<String> posFilterSet = new HashSet<>();
+
+	// private static void readPoSFilter(File file) throws FileNotFoundException
+	// {
+	// // TODO Auto-generated method stub
+	// Scanner br = new Scanner(new FileReader(file));
+	// while (br.hasNextLine()) {
+	// posFilterSet.add(br.nextLine());
+	// }
+	// br.close();
+	// }
+
 	public int getTotalPair() {
 		int count = 0;
-		for (Entry<Long, Integer> entry : pairMap.entrySet()) {
+		for (Entry<WordPair, Integer> entry : pairMap.entrySet()) {
 			count += entry.getValue();
 		}
 		return count;
 	}
 
-	public Map<Long, Integer> getPairMap() {
+	public Map<WordPair, Integer> getPairMap() {
 		return pairMap;
 	}
 
@@ -88,7 +109,7 @@ public class WordPairsManager implements Serializable {
 				instance = new WordPairsManager();
 		}
 		try {
-			readPoSFilter(new File("lib/posFilter.txt"));
+			readPoSTemplates(new File("lib/posTemplates.txt"));
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -110,31 +131,21 @@ public class WordPairsManager implements Serializable {
 			for (Review review : reviewList) {
 				if (review.getCreationTime() <= appManager.getLastUpdate())
 					continue;
+				count++;
 				List<List<Integer>> sentenceList = review.getSentenceList();
 				for (List<Integer> wordIDList : sentenceList) {
 					for (int i = 0; i < wordIDList.size() - 1; i++) {
-						int j = 1;
-						while (j <= WINDOW_SIZE && (i + j) < wordIDList.size()) {
-							int w1 = wordIDList.get(i);
-							int w2 = wordIDList.get(i + j++);
-							if (w1 == w2)
-								continue;
-							count++;
-							long pair = (((long) w1) << 32)
-									| (w2 & 0xffffffffL);
-							// int x = (int)(l >> 32);
-							// int y = (int)l;
-							// PairOfWords pair = new PairOfWords(
-							// wordIDList.get(i), wordIDList.get(i + j++));
-							Integer pairFreq = pairMap.get(pair);
-							if (pairFreq != null) {
-								// review.addNewPair(pair);
-								pairMap.put(pair, ++pairFreq);
-							} else {
+						for (Template rule : templateList) {
+							List<WordPair> extractedPairs = rule.match(
+									wordIDList, i);
+							for (WordPair pair : extractedPairs) {
+								Integer freq = pairMap.get(pair);
 								review.addNewPair(pair);
-								pairMap.put(pair, 1);
+								if (freq != null)
+									pairMap.put(pair, freq + 1);
+								else
+									pairMap.put(pair, 1);
 							}
-
 						}
 					}
 				}

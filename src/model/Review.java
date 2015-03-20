@@ -3,6 +3,7 @@ package model;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -20,7 +21,7 @@ public class Review implements Serializable {
 	// private List<Sentence> sentenceList;
 	// private List<Integer> wordIDList;
 	private List<List<Integer>> sentenceList;
-	private Set<Long> pairSet;
+	private HashMap<WordPair, Integer> pairDF;
 	private int rating;
 
 	public int getRating() {
@@ -69,12 +70,16 @@ public class Review implements Serializable {
 		return true;
 	}
 
-	public void addNewPair(long pair) {
-		pairSet.add(pair);
+	public void addNewPair(WordPair pair) {
+		Integer df = pairDF.get(pair);
+		if (df != null)
+			pairDF.put(pair, df + 1);
+		else
+			pairDF.put(pair, 1);
 	}
 
-	public Set<Long> getPairSet() {
-		return pairSet;
+	public HashMap<WordPair, Integer> getPairMap() {
+		return pairDF;
 	}
 
 	public String getDeviceName() {
@@ -112,7 +117,7 @@ public class Review implements Serializable {
 		// fullText));
 		extractSentences(fullText);
 		application = app;
-		pairSet = new HashSet<>();
+		pairDF = new HashMap<>();
 	}
 
 	@Override
@@ -221,8 +226,9 @@ public class Review implements Serializable {
 
 	public void writeSentenceToFile(PrintWriter fileWriter, long lastUpdate) {
 		// TODO Auto-generated method stub
-		 if (creationTime > lastUpdate)
-		fileWriter.println(toString());
+		if (creationTime > lastUpdate)
+			//fileWriter.println(toString());
+			fileWriter.println(toProperString());
 	}
 
 	/**
@@ -245,7 +251,26 @@ public class Review implements Serializable {
 		}
 		return strBld.toString();
 	}
-
+	/**
+	 * @return the full review with each word separated by a space
+	 */
+	public String toProperString() {
+		Vocabulary voc = Vocabulary.getInstance();
+		StringBuilder strBld = new StringBuilder();
+		String prefix = "";
+		for (List<Integer> sentence : sentenceList) {
+			for (Integer wordID : sentence) {
+				Word w = voc.getWord(wordID);
+				if (w != null) {
+					strBld.append(prefix);
+					strBld.append(w.toString());
+					prefix = " ";
+				}
+			}
+			strBld.append(". ");
+		}
+		return strBld.toString();
+	}
 	public List<List<Integer>> getSentenceList() {
 		// TODO Auto-generated method stub
 		return sentenceList;

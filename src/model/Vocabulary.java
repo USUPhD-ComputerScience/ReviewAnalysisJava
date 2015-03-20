@@ -213,7 +213,18 @@ public class Vocabulary implements Serializable {
 		else
 			return id;
 	}
-
+	/**
+	 * Return the wordID of a word.
+	 * 
+	 */
+	public int getWordID(String word) {
+		Word w = new Word(word, "");
+		Integer id = wordIDMap.get(w);
+		if (id == null)
+			return -1;
+		else
+			return id;
+	}
 	/**
 	 * Return the wordID of a word. Null if there is no such word.
 	 * 

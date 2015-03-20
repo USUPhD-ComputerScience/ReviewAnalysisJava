@@ -20,6 +20,7 @@ import java.util.Set;
 
 import model.Vocabulary;
 import model.Word;
+import model.WordPair;
 import Managers.WordPairsManager;
 
 public class StatisticalTests {
@@ -34,22 +35,17 @@ public class StatisticalTests {
 	// t=2.576 for confidence level 0.005 (99.5% confidence)
 	public static void tTest(WordPairsManager bigramVoc, Vocabulary wordVoc,
 			double t) {
-		Map<Long, Integer> bigramMap = bigramVoc.getPairMap();
-		int totalPair = bigramVoc.getTotalPair();
+		Map<WordPair, Integer> bigramMap = bigramVoc.getPairMap();
+		// int totalPair = bigramVoc.getTotalPair();
 		int totalWord = wordVoc.gettotalWord();
 		// double tTest = 0;
-		double h0 = 0;
-		double xBar = 0;
-
 		PrintWriter pw = null;
-		PrintWriter pwIgnored = null;
 		try {
-			pwIgnored = new PrintWriter(new FileWriter(main.main.DATA_DIRECTORY
-					+ "ttest_Ignored.csv"));
 			pw = new PrintWriter(new FileWriter(main.main.DATA_DIRECTORY
 					+ "ttest.csv"));
-			for (Entry<Long, Integer> entry : bigramMap.entrySet()) {
-				long w1w2 = entry.getKey();
+			pw.println("pair,count,score,pos");
+			for (Entry<WordPair, Integer> entry : bigramMap.entrySet()) {
+				long w1w2 = entry.getKey().getPair();
 				int w1 = (int) (w1w2 >> 32);
 				int w2 = (int) w1w2;
 				if (w1 == w2)
@@ -74,12 +70,9 @@ public class StatisticalTests {
 					Word word1 = wordVoc.getWord(w1);
 					Word word2 = wordVoc.getWord(w2);
 					String pos = word1.getPOS() + " " + word2.getPOS();
-					if (WordPairsManager.posFilterSet.contains(pos))
-						writeTestResult(pw, word1, word2, o11, tTest);
-					else {
-						writeTestResult(pwIgnored, word1, word2, o11, tTest);
-					}
+					writeTestResult(pw, entry.getKey(), o11, tTest);
 
+					entry.getKey().setTest(true, WordPair.TTEST);
 				}
 			}
 		} catch (IOException e) {
@@ -88,33 +81,27 @@ public class StatisticalTests {
 		}
 		if (pw != null)
 			pw.close();
-		if (pwIgnored != null)
-			pw.close();
 
 	}
 
-	public static void writeTestResult(PrintWriter pw, Word w1, Word w2,
+	public static void writeTestResult(PrintWriter pw, WordPair pair,
 			double pairFreq, double score) {
-		pw.println(w1.toString() + " " + w2.toString() + "," + pairFreq + ","
-				+ score + "," + w1.getPOS() + " " + w2.getPOS());
-
+		pw.println(pair.toString() + "," + pairFreq + "," + score + ","
+				+ pair.toPOS());
 	}
 
 	public static void testMutualInformation(WordPairsManager bigramVoc,
 			Vocabulary wordVoc, double threshold) {
-		Map<Long, Integer> bigramMap = bigramVoc.getPairMap();
+		Map<WordPair, Integer> bigramMap = bigramVoc.getPairMap();
 		double totalWord = wordVoc.gettotalWord();
 		// int totalPair = bigramVoc.getTotalPair();
 		PrintWriter pw = null;
-
-		PrintWriter pwIgnored = null;
 		try {
-			pwIgnored = new PrintWriter(new FileWriter(main.main.DATA_DIRECTORY
-					+ "mutualInformation_Ignored.csv"));
 			pw = new PrintWriter(new FileWriter(main.main.DATA_DIRECTORY
 					+ "mutualInformation.csv"));
-			for (Entry<Long, Integer> entry : bigramMap.entrySet()) {
-				long w1w2 = entry.getKey();
+			pw.println("pair,count,score,pos");
+			for (Entry<WordPair, Integer> entry : bigramMap.entrySet()) {
+				long w1w2 = entry.getKey().getPair();
 				int w1 = (int) (w1w2 >> 32);
 				int w2 = (int) w1w2;
 				if (w1 == w2)
@@ -131,11 +118,7 @@ public class StatisticalTests {
 					Word word1 = wordVoc.getWord(w1);
 					Word word2 = wordVoc.getWord(w2);
 					String pos = word1.getPOS() + " " + word2.getPOS();
-					if (WordPairsManager.posFilterSet.contains(pos))
-						writeTestResult(pw, word1, word2, o11, mi);
-					else {
-						writeTestResult(pwIgnored, word1, word2, o11, mi);
-					}
+					writeTestResult(pw, entry.getKey(), o11, mi);
 				}
 			}
 
@@ -145,24 +128,19 @@ public class StatisticalTests {
 		}
 		if (pw != null)
 			pw.close();
-		if (pwIgnored != null)
-			pwIgnored.close();
 	}
 
 	public static void testLikelyHoodRatio(WordPairsManager bigramVoc,
 			Vocabulary wordVoc, double confidentChiSquare) {
-		Map<Long, Integer> bigramMap = bigramVoc.getPairMap();
+		Map<WordPair, Integer> bigramMap = bigramVoc.getPairMap();
 		double totalWord = wordVoc.gettotalWord();
-		int totalPair = bigramVoc.getTotalPair();
 		PrintWriter pw = null;
-		PrintWriter pwIgnored = null;
 		try {
-			pwIgnored = new PrintWriter(new FileWriter(main.main.DATA_DIRECTORY
-					+ "likelyHoodRatio_Ignored.csv"));
 			pw = new PrintWriter(new FileWriter(main.main.DATA_DIRECTORY
 					+ "likelyHoodRatio.csv"));
-			for (Entry<Long, Integer> entry : bigramMap.entrySet()) {
-				long w1w2 = entry.getKey();
+			pw.println("pair,count,score,pos");
+			for (Entry<WordPair, Integer> entry : bigramMap.entrySet()) {
+				long w1w2 = entry.getKey().getPair();
 				int w1 = (int) (w1w2 >> 32);
 				int w2 = (int) w1w2;
 				if (w1 == w2)
@@ -204,12 +182,8 @@ public class StatisticalTests {
 					Word word2 = wordVoc.getWord(w2);
 
 					String pos = word1.getPOS() + " " + word2.getPOS();
-					if (WordPairsManager.posFilterSet.contains(pos))
-						writeTestResult(pw, word1, word2, o11, loglikelihood);
-					else {
-						writeTestResult(pwIgnored, word1, word2, o11,
-								loglikelihood);
-					}
+					writeTestResult(pw, entry.getKey(), o11, loglikelihood);
+
 				}
 			}
 
@@ -219,25 +193,20 @@ public class StatisticalTests {
 		}
 		if (pw != null)
 			pw.close();
-		if (pwIgnored != null)
-			pwIgnored.close();
 	}
 
 	public static void testLikelyHoodRatioManning(WordPairsManager bigramVoc,
 			Vocabulary wordVoc, double confidentChiSquare) {
-		Map<Long, Integer> bigramMap = bigramVoc.getPairMap();
+		Map<WordPair, Integer> bigramMap = bigramVoc.getPairMap();
 		double totalWord = wordVoc.gettotalWord();
-		int totalPair = bigramVoc.getTotalPair();
 		PrintWriter pw = null;
 
-		PrintWriter pwIgnored = null;
 		try {
-			pwIgnored = new PrintWriter(new FileWriter(main.main.DATA_DIRECTORY
-					+ "likelyHoodRatioManning_Ignored.csv"));
 			pw = new PrintWriter(new FileWriter(main.main.DATA_DIRECTORY
 					+ "likelyHoodRatioManning.csv"));
-			for (Entry<Long, Integer> entry : bigramMap.entrySet()) {
-				long w1w2 = entry.getKey();
+			pw.println("pair,count,score,pos");
+			for (Entry<WordPair, Integer> entry : bigramMap.entrySet()) {
+				long w1w2 = entry.getKey().getPair();
 				int w1 = (int) (w1w2 >> 32);
 				int w2 = (int) w1w2;
 				if (w1 == w2)
@@ -262,12 +231,9 @@ public class StatisticalTests {
 					Word word1 = wordVoc.getWord(w1);
 					Word word2 = wordVoc.getWord(w2);
 					String pos = word1.getPOS() + " " + word2.getPOS();
-					if (WordPairsManager.posFilterSet.contains(pos))
-						writeTestResult(pw, word1, word2, c12, loglikelihood);
-					else {
-						writeTestResult(pwIgnored, word1, word2, c12,
-								loglikelihood);
-					}
+					writeTestResult(pw, entry.getKey(), c12, loglikelihood);
+
+					entry.getKey().setTest(true, WordPair.LOG_LIKELIHOOD);
 				}
 			}
 
@@ -277,25 +243,18 @@ public class StatisticalTests {
 		}
 		if (pw != null)
 			pw.close();
-		if (pwIgnored != null)
-			pwIgnored.close();
 	}
 
 	public static void testGoogleMetric(WordPairsManager bigramVoc,
 			Vocabulary wordVoc, double threshold) {
-		Map<Long, Integer> bigramMap = bigramVoc.getPairMap();
-		double totalWord = wordVoc.gettotalWord();
-		int totalPair = bigramVoc.getTotalPair();
+		Map<WordPair, Integer> bigramMap = bigramVoc.getPairMap();
 		PrintWriter pw = null;
-
-		PrintWriter pwIgnored = null;
 		try {
-			pwIgnored = new PrintWriter(new FileWriter(main.main.DATA_DIRECTORY
-					+ "testGoogleMetric_Ignored.csv"));
 			pw = new PrintWriter(new FileWriter(main.main.DATA_DIRECTORY
 					+ "testGoogleMetric.csv"));
-			for (Entry<Long, Integer> entry : bigramMap.entrySet()) {
-				long w1w2 = entry.getKey();
+			pw.println("pair,count,score,pos");
+			for (Entry<WordPair, Integer> entry : bigramMap.entrySet()) {
+				long w1w2 = entry.getKey().getPair();
 				int w1 = (int) (w1w2 >> 32);
 				int w2 = (int) w1w2;
 				if (w1 == w2)
@@ -317,12 +276,9 @@ public class StatisticalTests {
 					Word word1 = wordVoc.getWord(w1);
 					Word word2 = wordVoc.getWord(w2);
 					String pos = word1.getPOS() + " " + word2.getPOS();
-					if (WordPairsManager.posFilterSet.contains(pos))
-						writeTestResult(pw, word1, word2, c12, googleRatio);
-					else {
-						writeTestResult(pwIgnored, word1, word2, c12,
-								googleRatio);
-					}
+					writeTestResult(pw, entry.getKey(), c12, googleRatio);
+
+					entry.getKey().setTest(true, WordPair.GOOGLE_METRIC);
 				}
 			}
 
@@ -332,8 +288,6 @@ public class StatisticalTests {
 		}
 		if (pw != null)
 			pw.close();
-		if (pwIgnored != null)
-			pwIgnored.close();
 	}
 
 	// Likelihood function

@@ -26,9 +26,20 @@ public class NatureLanguageProcessor {
 			"WP$", "WRB", "$", "``", "NNPS", "NNS", "PDT", "POS", "PRP",
 			"PRP$", "RB", "RBR", "RBS", "RP", "SYM", "TO", "CC", "CD", "DT",
 			"EX", "FW", "IN", "JJ", "JJR", "JJS", "LS", "MD", "NN", "NNP" };
+
 	public static final Set<String> POSSET = new HashSet<>(
 			Arrays.asList(POSLIST));
-	private Set<String> stopWordSet;
+	private Set<String> stopWordSet1;// less extensive
+	private Set<String> stopWordSet2;// more extensive
+
+	public Set<String> getStopWordSet1() {
+		return stopWordSet1;
+	}
+
+	public Set<String> getStopWordSet2() {
+		return stopWordSet2;
+	}
+
 	private static NatureLanguageProcessor instance = null;
 	MaxentTagger PoSTagger;
 	private static final HashMap<String, Integer> realDictionary = new HashMap<>();
@@ -39,6 +50,7 @@ public class NatureLanguageProcessor {
 			instance = new NatureLanguageProcessor();
 		return instance;
 	}
+
 	private static void loadCorrectionMap(File file)
 			throws FileNotFoundException {
 		// TODO Auto-generated method stub
@@ -51,6 +63,7 @@ public class NatureLanguageProcessor {
 		}
 		br.close();
 	}
+
 	private static void loadDictionary(File[] fileLists) throws Exception {
 		for (File file : fileLists) {
 			Scanner br = new Scanner(new FileReader(file));
@@ -59,6 +72,7 @@ public class NatureLanguageProcessor {
 			br.close();
 		}
 	}
+
 	private NatureLanguageProcessor() {
 		readStopWordsFromFile();
 		PoSTagger = new MaxentTagger("lib/english-left3words-distsim.tagger");
@@ -73,14 +87,21 @@ public class NatureLanguageProcessor {
 	}
 
 	private void readStopWordsFromFile() {
-		stopWordSet = new HashSet<>();
-		System.err.println(">>Read StopWords from file - englishImprovised.stop");
+		stopWordSet1 = new HashSet<>();
+		stopWordSet2 = new HashSet<>();
+		System.err
+				.println(">>Read StopWords from file - englishImprovised.stop");
 		CSVReader reader = null;
 		try {
 			reader = new CSVReader(new FileReader("lib/englishImprovised.stop"));
 			String[] row = null;
 			while ((row = reader.readNext()) != null) {
-				stopWordSet.add(row[0]);
+				stopWordSet1.add(row[0]);
+			}
+			stopWordSet2.addAll(stopWordSet1);
+			reader = new CSVReader(new FileReader("lib/englishExtensive.stop"));
+			while ((row = reader.readNext()) != null) {
+				stopWordSet2.add(row[0]);
 			}
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -151,11 +172,12 @@ public class NatureLanguageProcessor {
 
 	public List<String> extractWordsFromText(String text) {
 		text = text.toLowerCase();
-		String[] words = text.split("[^a-z']+");
-		//SymSpell symspell = SymSpell.getInstance();
+		String[] words = text.split("[^a-z0-9']+");
+		// SymSpell symspell = SymSpell.getInstance();
 		ArrayList<String> wordList = new ArrayList<>();
 		for (String word : words) {
-			if (word.equals("null") || word.length() < 2)
+			if (word.equals("null") || word.length() < 1 || word.equals("'")
+					|| word.equals(""))
 				continue;
 
 			String[] wordarray = correctionMap.get(word);
@@ -184,7 +206,7 @@ public class NatureLanguageProcessor {
 		double uniproportion = unigramScore / totalScore;
 		if (biproportion < 0.4 && uniproportion < 0.5)
 			return null;
-		
+
 		return wordList;
 	}
 
@@ -203,7 +225,8 @@ public class NatureLanguageProcessor {
 			if (pair.length < 2)
 				continue;
 			// System.out.print(count++ + ": " + pair[0]);
-			pair = stemmer.stem(pair);
+			if (!stopWordSet1.contains(pair[0]))
+				pair = stemmer.stem(pair);
 
 			results.add(pair);
 			// System.out.println("-" + pair[0] + "<->" + pair[1]);
@@ -263,8 +286,8 @@ public class NatureLanguageProcessor {
 		List<String[]> results = new ArrayList<>();
 		for (int i = 0; i < words.length; i++) {
 			String[] w = words[i].split("_");
-			if (!stopWordSet.contains(w[0]))
-				results.add(w);
+			// if (!stopWordSet.contains(w[0]))
+			results.add(w);
 		}
 		return results;
 	}
@@ -292,7 +315,8 @@ public class NatureLanguageProcessor {
 		List<String[]> results = new ArrayList<>();
 		for (int i = 0; i < words.length; i++) {
 			String[] w = words[i].split("_");
-			if (!stopWordSet.contains(w[0]))
+			// if (!stopWordSet.contains(w[0]))
+			if (w.length == 2)
 				results.add(w);
 		}
 		return results;

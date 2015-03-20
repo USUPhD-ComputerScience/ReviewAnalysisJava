@@ -1,10 +1,19 @@
 package word2vec;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Scanner;
+import java.util.Set;
 
 public class WordVec {
 
@@ -12,8 +21,8 @@ public class WordVec {
 	private static WordVec instance = null;
 	private static Map<String, float[]> phraseVector = new HashMap<>();
 	public static final int VECTOR_SIZE = 200;
-	private static final String VECTOR_FILE = main.main.DATA_DIRECTORY
-			+ "v9\\ReviewVectors.txt";
+	public static final String VECTOR_FILE = main.main.DATA_DIRECTORY
+			+ "v21\\ReviewVectors_phrase.txt";
 
 	private WordVec() {
 		wordVector = new HashMap<>();
@@ -135,23 +144,5 @@ public class WordVec {
 			return (1 + sim / Math.sqrt(square1) / Math.sqrt(square2)) / 2;
 	}
 
-	public static void main(String[] args) {
-		WordVec wordvec = new WordVec();
-		try {
-			wordvec.loadTextModel(VECTOR_FILE);
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		Scanner scanner = new Scanner(System.in);
-		while (true) {
-			System.out.println("Input your first word:");
-			String word1 = scanner.next().replace(" ", "_");
-			System.out.println("Input your second word:");
-			String word2 = scanner.next().replace(" ", "_");
-			System.out.println("Similarity = "
-					+ wordvec.cosineSimilarityForWords(word1, word2, true));
-		}
-	}
-
+	
 }

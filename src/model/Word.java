@@ -26,13 +26,13 @@ public class Word extends Clusterable implements Serializable {
 	public HashMap<String,Integer> getPOSList(){
 		return POSList;
 	}
-	public Word(String w, String POS) {
+	public Word(String w, String pos) {
 		word = w.intern();
 		count = 1;
 		POSList = new HashMap<>();
-		POSList.put(POS.intern(), 1);
+		POSList.put(pos.intern(), 1);
 		POSMaxCount = 1;
-		POS = POS.intern();
+		POS = pos.intern();
 		hash = word.hashCode();
 	}
 

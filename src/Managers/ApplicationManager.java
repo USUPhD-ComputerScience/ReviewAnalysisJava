@@ -41,15 +41,7 @@ public class ApplicationManager implements Serializable {
 					fin = new FileInputStream(FILENAME);
 					ObjectInputStream oos = new ObjectInputStream(fin);
 					instance = (ApplicationManager) oos.readObject();
-				} catch (FileNotFoundException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-					instance = new ApplicationManager();
-				} catch (ClassNotFoundException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-					instance = new ApplicationManager();
-				} catch (IOException e) {
+				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 					instance = new ApplicationManager();

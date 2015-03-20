@@ -53,6 +53,7 @@ public class main {
 
 		StatisticalTests.getInstance().testGoogleMetric(
 				WordPairsManager.getInstance(), Vocabulary.getInstance(), 10);
+		StatisticalTests.getInstance();
 		System.out.println("-Done");
 		// Vocabulary.getInstance().clusterWords();
 		Vocabulary.getInstance().writeWordsToFile(DATA_DIRECTORY + "word.csv");
@@ -104,12 +105,15 @@ public class main {
 
 			String fields[] = { "ID", "name" };
 			String condition = null;
-			condition = "count>0";
-			//"name='com.supercell.clashofclans'";;
+			condition =  "count>1000";
+			//"name='com.instagram.android'";
+					//"name='com.supercell.clashofclans'";
+			//"name='com.facebook.katana'";
+			
 			ResultSet results;
 			results = db.select(PostgreSQLConnector.APPID_TABLE, fields,
 					condition);
-			
+
 			while (results.next()) {
 				String appID = results.getString("name");
 				Integer dbID = results.getInt("ID");
