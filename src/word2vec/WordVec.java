@@ -18,13 +18,12 @@ import java.util.Set;
 public class WordVec {
 
 	private final Map<String, float[]> wordVector;
-	private static WordVec instance = null;
 	private static Map<String, float[]> phraseVector = new HashMap<>();
 	public static final int VECTOR_SIZE = 200;
 	public static final String VECTOR_FILE = main.main.DATA_DIRECTORY
-			+ "v21\\ReviewVectors_phrase.txt";
+			+ "ReviewVectors.txt";
 
-	private WordVec() {
+	public WordVec() {
 		wordVector = new HashMap<>();
 		try {
 			System.out.print("Loading Word Vectors");
@@ -34,12 +33,6 @@ public class WordVec {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	}
-
-	public static WordVec getInstance() {
-		if (instance == null)
-			instance = new WordVec();
-		return instance;
 	}
 
 	public float[] getVectorForPhrase(String phrase) {
@@ -144,5 +137,4 @@ public class WordVec {
 			return (1 + sim / Math.sqrt(square1) / Math.sqrt(square2)) / 2;
 	}
 
-	
 }

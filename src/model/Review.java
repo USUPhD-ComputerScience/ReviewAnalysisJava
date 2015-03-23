@@ -53,7 +53,7 @@ public class Review implements Serializable {
 			if (wordList == null)
 				return false;
 			List<String[]> stemmedWordsWithPOS = nlp.stem(nlp
-					.findPosTagAndRemoveStopWords(wordList));
+					.findPosTag(wordList));
 
 			if (stemmedWordsWithPOS != null) {
 				for (String[] pair : stemmedWordsWithPOS) {

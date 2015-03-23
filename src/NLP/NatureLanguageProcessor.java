@@ -292,7 +292,7 @@ public class NatureLanguageProcessor {
 		return results;
 	}
 
-	public List<String[]> findPosTagAndRemoveStopWords(List<String> wordList) {
+	public List<String[]> findPosTag(List<String> wordList) {
 		if (wordList == null)
 			return null;
 		SymSpell spellCorrector = SymSpell.getInstance();

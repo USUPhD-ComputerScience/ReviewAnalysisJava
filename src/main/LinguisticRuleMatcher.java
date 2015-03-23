@@ -16,7 +16,7 @@ import edu.stanford.nlp.tagger.maxent.MaxentTagger;
 
 public class LinguisticRuleMatcher {
 	public static final ArrayList<String> reviews = new ArrayList<>();
-	public static final String DIR = "E:\\AndroidAnalysis\\ReviewData\\data\\v21\\request\\";
+	public static final String DIR = "E:\\AndroidAnalysis\\ReviewData\\data\\v22-request\\";
 	public static final ArrayList<ArrayList<PartOfRule>> linguisticRules = new ArrayList<>();
 
 	public static void main(String[] args) throws Throwable {

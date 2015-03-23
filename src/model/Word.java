@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Map.Entry;
 
 import Analyzer.Clusterable;
+import Managers.ApplicationManager;
 import NLP.NatureLanguageProcessor;
 import util.Util;
 import word2vec.WordVec;
@@ -23,9 +24,10 @@ public class Word extends Clusterable implements Serializable {
 	private String POS;
 	private int POSMaxCount = 0;
 
-	public HashMap<String,Integer> getPOSList(){
+	public HashMap<String, Integer> getPOSList() {
 		return POSList;
 	}
+
 	public Word(String w, String pos) {
 		word = w.intern();
 		count = 1;
@@ -94,7 +96,7 @@ public class Word extends Clusterable implements Serializable {
 	@Override
 	public float[] getVector() {
 		// TODO Auto-generated method stub
-		return WordVec.getInstance().getVectorForWord(word);
+		return ApplicationManager.getInstance().word2vec.getVectorForWord(word);
 	}
 
 	@Override

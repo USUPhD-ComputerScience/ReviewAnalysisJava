@@ -22,7 +22,7 @@ import Managers.WordPairsManager;
 import NLP.NatureLanguageProcessor;
 
 public class KeyWordDiscover {
-	public static final String DIR = "E:\\AndroidAnalysis\\ReviewData\\data\\v21\\keyword\\";
+	public static final String DIR = "E:\\AndroidAnalysis\\ReviewData\\data\\v21-keyword\\";
 	public static List<String> supportiveData = new ArrayList<>();
 	public static List<String> unsupportiveData = new ArrayList<>();
 	public static HashMap<String, Integer> supportiveWordRank = new HashMap<>();
@@ -50,33 +50,36 @@ public class KeyWordDiscover {
 	private static void extractKeyWordsUsingSkewness() throws Throwable {
 		System.out.println(">>analyzing");
 		System.out.println(">>writing to file");
-		PrintWriter pw = new PrintWriter(DIR + "keyWords_pearsonCor.csv");
-		pw.println("word,skewness,rate 1,rate 2,rate 3,rate 4,rate 5,total");
+		PrintWriter pw = new PrintWriter(DIR + "keyWords_skewness.csv");
+		pw.println("word,score,rate 1,rate 2,rate 3,rate 4,rate 5,total");
 		int n = 5;
 		for (Entry<String, int[]> word : wholePopulationStat.entrySet()) {
 			int[] count = word.getValue();
 			double sum = 0;
+			double mean = 0.0;
 			for (int i = 0; i < n; i++) {
 				sum += count[i];
+				mean += count[i] * (1 + i);
 			}
+			mean = mean / sum;
 			if (sum < 21 || (count[0] + count[1]) < 21)
 				continue;
 
-			// double m3 = 0; // sample third central moment
-			// double s3 = 0; // cubic of sample standard deviation.
-			// // double mean = sum / n;
+			double m3 = 0; // sample third central moment
+			double s3 = 0; // cubic of sample standard deviation.
+			// double mean = sum / n;
 			// double mean = count[2];
-			// for (int i = 0; i < n; i++) {
-			// m3 += Math.pow(count[i] - mean, 3);
-			// s3 += Math.pow(count[i] - mean, 2);
-			// }
-			// m3 = m3 / n;
-			// s3 = Math.pow(s3 / (n - 1), 1.5);
-			// double skewness = m3 / s3;
+			for (int i = 0; i < n; i++) {
+				m3 += Math.pow(count[i] - mean, 3);
+				s3 += Math.pow(count[i] - mean, 2);
+			}
+			m3 = m3 / n;
+			s3 = Math.pow(s3 / (n - 1), 1.5);
+			double skewness = m3 / s3;
 			// double slope = calcSlope(count[0], count[1], count[2], count[3],
 			// count[4]);
-			double cor = pearsonCorrelation(count);
-			pw.println(word.getKey() + "," + cor + "," + count[0] + ","
+			// double cor = pearsonCorrelation(count);
+			pw.println(word.getKey() + "," + skewness + "," + count[0] + ","
 					+ count[1] + "," + count[2] + "," + count[3] + ","
 					+ count[4] + "," + sum);
 		}

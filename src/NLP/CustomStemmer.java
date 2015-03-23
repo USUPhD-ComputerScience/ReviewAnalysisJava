@@ -382,7 +382,7 @@ public class CustomStemmer {
 			result[0] = stemNNS(pair[0]).intern();
 			result[1] = "NN".intern();
 		} else {
-			if (pair[1].equals("VBD") || pair[1].equals("VBG")
+			if (pair[1].equals("VBD") // || pair[1].equals("VBG")
 					|| pair[1].equals("VBN") || pair[1].equals("VBZ")) {
 				result[0] = irregularVerbMap.get(pair[0]);
 				result[1] = "VB".intern();
@@ -399,9 +399,9 @@ public class CustomStemmer {
 				case "VBD":
 					result[0] = stemVBD(pair[0]).intern();
 					break;
-				case "VBG":
-					result[0] = stemVBG(pair[0]).intern();
-					break;
+				// case "VBG":
+				// result[0] = stemVBG(pair[0]).intern();
+				// break;
 				case "VBN":
 					result[0] = stemVBN(pair[0]).intern();
 					break;

@@ -16,6 +16,7 @@ import model.Application;
 import model.Review;
 import model.Review.ReviewBuilder;
 import util.PostgreSQLConnector;
+import word2vec.WordVec;
 
 public class ApplicationManager implements Serializable {
 
@@ -31,6 +32,7 @@ public class ApplicationManager implements Serializable {
 			+ "applicationsData" + ".ser";
 	private int totalReviewCount;
 
+	public static final WordVec word2vec = new WordVec();
 	public static synchronized ApplicationManager getInstance() {
 		if (instance == null) {
 			File fcheckExist = new File(FILENAME);

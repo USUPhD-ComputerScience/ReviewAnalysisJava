@@ -22,13 +22,13 @@ public class AnalyzeClusters {
 	static private ArrayList<PairForCluster> googleMetricTest = new ArrayList<>();
 	static private ArrayList<PairForCluster> tTest = new ArrayList<>();
 	static private ArrayList<Item> words = new ArrayList<>();
-	static private final String CURRENT_DIR = "E:\\AndroidAnalysis\\ReviewData\\data\\v21\\keyword\\";
+	static private final String CURRENT_DIR = "E:\\AndroidAnalysis\\ReviewData\\data\\v22-request\\";
 	static private final List<String> data = new ArrayList<>();
 
 	public static void main(String[] args) throws Throwable {
 		// clusterPairs();
-		//clusterWords();
-		 clusterRequestSentences();
+		clusterWords();
+		// clusterRequestSentences();
 	}
 
 	public static void clusterRequestSentences() throws Throwable {
@@ -69,8 +69,9 @@ public class AnalyzeClusters {
 
 	private static void clusterWords() throws Throwable {
 		System.out.println(">>Read data from test files");
-		loadTestSet(new File(CURRENT_DIR + "keyWords_pearsonCor.csv"));
-		cluster(new File(CURRENT_DIR + "wordClusters.csv"));
+		loadTestSet(new File(main.main.DATA_DIRECTORY
+				+ "keyWords_pearsonCor.csv"));
+		cluster(new File(main.main.DATA_DIRECTORY + "wordClusters.csv"));
 
 	}
 
@@ -182,7 +183,7 @@ public class AnalyzeClusters {
 				String word = values[0];
 				if (stopwords.contains(word))
 					continue;
-				if (Double.parseDouble(values[1]) > -0.5)
+				if (Double.parseDouble(values[1]) > -0.4)
 					continue;
 				count++;
 				int freq = (int) Double.parseDouble(values[7]);
@@ -201,12 +202,12 @@ public class AnalyzeClusters {
 		int frequency;
 		String word;
 		boolean change = false;
+		public static final WordVec word2vec = new WordVec();
 
 		public Item(String str, int freq) {
 			// TODO Auto-generated constructor stub
 			frequency = freq;
 			word = str.intern();
-			WordVec word2vec = WordVec.getInstance();
 			float[] tempVector = word2vec.getVectorForWord(word);
 			if (tempVector != null) {
 				vector = new float[WordVec.VECTOR_SIZE];

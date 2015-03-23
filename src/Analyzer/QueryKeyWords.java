@@ -24,9 +24,10 @@ import Managers.WordPairsManager;
 import NLP.NatureLanguageProcessor;
 
 public class QueryKeyWords {
-	public static final String DIR = "E:\\AndroidAnalysis\\ReviewData\\data\\v21\\keyword\\";
+	public static final String DIR = "E:\\AndroidAnalysis\\ReviewData\\data\\v22-request\\";
 	static Map<String, Set<String>> keywords = new HashMap<>();// Arrays.asList(new
 																// String[]
+	private static Vocabulary voc = Vocabulary.getInstance();
 
 	// {
 
@@ -52,8 +53,8 @@ public class QueryKeyWords {
 	}
 
 	public static void main(String[] args) throws Throwable {
-		queryFromDatabase();
-		// queryFromFile();
+		// queryFromDatabase();
+		queryFromFile();
 	}
 
 	static private final List<String> data = new ArrayList<>();
@@ -71,37 +72,39 @@ public class QueryKeyWords {
 		readKeyWords(new File(DIR + "requestClusters.csv"));
 		readData(new File(DIR + "requestSentences.csv"));
 		System.out.println(">> Starting...");
-
 		// readCollocations(new File(DIR + "testGoogleMetric.csv"));
 		for (Entry<String, Set<String>> topic : keywords.entrySet()) {
-			PrintWriter pw = new PrintWriter(DIR + topic.getKey()
+			PrintWriter pw = new PrintWriter(DIR + "request\\" + topic.getKey()
 					+ "_queryKeyWords.csv");
-			pw.println("keyword,sentence");
+			pw.println("keyword,sentence,cosineSim_tfidf");
 			Set<String> keys = topic.getValue();
 			System.out.println(">> Writing ranked review...");
 			for (String sentence : data) {
 
-				HashSet<String> foundKey = new HashSet<>();
+				HashMap<String, Double> foundKey = new HashMap<>();
 				String[] words = sentence.split("[^A-Z0-9']+");
 				for (String w : words) {
 					if (w.equals("") || w.equals("'"))
 						continue;
-					for (String keyword : keys) {
-						if (w.toLowerCase().equals(keyword)) {
-							foundKey.add(keyword);
-							break;
-						}
+					if (keys.contains(w.toLowerCase())) {
+						Double tfidf = foundKey.get(w);
+						if (tfidf == null)
+							foundKey.put(w, 1.0);
+						else
+							foundKey.put(w, tfidf + 1.0);
 					}
 				}
 
-				if (foundKey.size() < 2)
+				if (foundKey.size() < 1)
 					continue;
 
 				StringBuilder key = new StringBuilder();
-				for (String w : foundKey)
-					key.append(w + "-");
-
-				pw.println(key.toString() + "," + sentence);
+				for (Entry<String, Double> w : foundKey.entrySet()) {
+					String wordstr = w.getKey().toLowerCase();
+					key.append(wordstr + "-");
+				}
+				pw.println(key.toString() + "," + sentence + ","
+						+ cosineSimilarityOfTFIDF(keys, foundKey, true));
 
 			}
 			pw.close();
@@ -110,17 +113,49 @@ public class QueryKeyWords {
 		System.out.println(">> Done");
 	}
 
+	private static double cosineSimilarityOfTFIDF(Set<String> keys,
+			HashMap<String, Double> foundKey, boolean normalize) {
+
+		double[] vector1 = new double[keys.size()];
+		double[] vector2 = new double[keys.size()];
+		int index = 0;
+		for (String key : keys) {
+			vector1[index] = 1 / (1 + Math.log(voc.getWordCount(voc
+					.getWordID(key))));
+			Double freq = foundKey.get(key.toUpperCase());
+			if (freq != null)
+				vector2[index] = freq
+						/ (1 + Math.log(voc.getWordCount(voc.getWordID(key
+								.toLowerCase()))));
+			else
+				vector2[index] = 0.0;
+			index++;
+		}
+		double sim = 0, square1 = 0, square2 = 0;
+		if (vector1 == null || vector2 == null)
+			return 0;
+		for (int i = 0; i < vector1.length; i++) {
+			square1 += vector1[i] * vector1[i];
+			square2 += vector2[i] * vector2[i];
+			sim += vector1[i] * vector2[i];
+		}
+		if (!normalize)
+			return sim / Math.sqrt(square1) / Math.sqrt(square2);
+		else
+			return (1 + sim / Math.sqrt(square1) / Math.sqrt(square2)) / 2;
+	}
+
 	private static void queryFromDatabase() throws Throwable,
 			FileNotFoundException {
 		// String keyTopic = "kicking";
-		readKeyWords(new File(DIR + "wordClusters.csv"));
+		readKeyWords(new File(main.main.DATA_DIRECTORY + "wordClusters.csv"));
 		System.out.println(">> Starting...");
 		init();
 		// readCollocations(new File(DIR + "testGoogleMetric.csv"));
 		for (Entry<String, Set<String>> topic : keywords.entrySet()) {
-			PrintWriter pw = new PrintWriter(DIR + topic.getKey()
-					+ "_queryKeyWords.csv");
-			pw.println("keyword,review,pairs,rating");
+			PrintWriter pw = new PrintWriter(main.main.DATA_DIRECTORY
+					+ "keyword\\" + topic.getKey() + "_queryKeyWords.csv");
+			pw.println("keyword,review,pairs,score");
 			Set<String> keys = topic.getValue();
 			System.out.println(">> Writing ranked review...");
 			for (Application app : ApplicationManager.getInstance().getAppSet()) {
@@ -129,7 +164,7 @@ public class QueryKeyWords {
 						continue;
 					String[] sentences = rev.toProperString().split("\\.");
 					StringBuilder reviewInString = new StringBuilder();
-					HashSet<String> foundKey = new HashSet<>();
+					HashMap<String, Double> foundKey = new HashMap<>();
 					for (String sen : sentences) {
 						String[] words = sen.split(" ");
 						String prefix = "";
@@ -138,12 +173,16 @@ public class QueryKeyWords {
 							reviewInString.append(prefix);
 							prefix = " ";
 							boolean contains = false;
-							for (String keyword : keys) {
-								if (w.equals(keyword)) {
-									foundKey.add(keyword);
-									contains = true;
-								}
+							if (keys.contains(w)) {
+								contains = true;
+								Double tfidf = foundKey.get(w);
+								if (tfidf == null)
+									foundKey.put(w, 1.0);
+								else
+									foundKey.put(w, tfidf + 1.0);
+
 							}
+
 							if (contains)
 								reviewInString.append(w.toUpperCase());
 							else
@@ -156,8 +195,10 @@ public class QueryKeyWords {
 						continue;
 
 					StringBuilder key = new StringBuilder();
-					for (String w : foundKey)
-						key.append(w + "-");
+					for (Entry<String, Double> w : foundKey.entrySet()) {
+						String wordstr = w.getKey().toLowerCase();
+						key.append(wordstr + "-");
+					}
 					StringBuilder strBuilder = new StringBuilder();
 					for (Entry<WordPair, Integer> pair : rev.getPairMap()
 							.entrySet()) {
@@ -167,7 +208,7 @@ public class QueryKeyWords {
 					}
 					pw.println(key.toString() + "," + reviewInString.toString()
 							+ "," + strBuilder.toString() + ","
-							+ rev.getRating());
+							+ cosineSimilarityOfTFIDF(keys, foundKey, true));
 
 				}
 			}

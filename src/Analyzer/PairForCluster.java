@@ -5,10 +5,11 @@ import word2vec.WordVec;
 public class PairForCluster extends Clusterable {
 
 	float[] vector = null;
+
+	public static final WordVec word2vec = new WordVec();
 	public PairForCluster(String str, Double freq) {
 		pair = str.intern();
 		frequency = freq.intValue();
-		WordVec word2vec = WordVec.getInstance();
 		float[] tempVector = word2vec.getVectorForPhrase(pair);
 		if(tempVector != null){
 			vector = new float[WordVec.VECTOR_SIZE];

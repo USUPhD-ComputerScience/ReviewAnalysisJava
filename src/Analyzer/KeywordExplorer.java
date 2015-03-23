@@ -16,7 +16,8 @@ import java.util.Map.Entry;
 import word2vec.WordVec;
 
 public class KeywordExplorer {
-	static WordVec word2vec = WordVec.getInstance();
+
+	public static final WordVec word2vec = new WordVec();
 	static Map<String, Double> pairSimiliarity = new HashMap<>();
 
 	public static void main(String[] args) throws Throwable {
@@ -25,7 +26,7 @@ public class KeywordExplorer {
 		Set<String> selection = new HashSet<>();
 		selection.add("battery");
 		autoExploreKeyWords(new File(main.main.DATA_DIRECTORY
-				+ "\\v21\\keywordExplorationResult.txt"), selection, 0.7);
+				+ "keywordExplorationResult.txt"), selection, 0.7);
 	}
 
 	public static double cosineSimilarity(String word1, String word2) {
