@@ -55,6 +55,7 @@ public class KeyWordDiscover {
 		int n = 5;
 		for (Entry<String, int[]> word : wholePopulationStat.entrySet()) {
 			int[] count = word.getValue();
+			double[] prob = new double[5];
 			double sum = 0;
 			double mean = 0.0;
 			for (int i = 0; i < n; i++) {
@@ -67,15 +68,18 @@ public class KeyWordDiscover {
 
 			double m3 = 0; // sample third central moment
 			double s3 = 0; // cubic of sample standard deviation.
-			// double mean = sum / n;
-			// double mean = count[2];
+			
+			for (int i = 0; i < n; i++)
+				prob[i] = (double) count[i] / sum;
+			
 			for (int i = 0; i < n; i++) {
-				m3 += Math.pow(count[i] - mean, 3);
-				s3 += Math.pow(count[i] - mean, 2);
+				m3 += prob[i] * Math.pow(i + 1 - mean, 3.0);
+				s3 += prob[i] * Math.pow(i + 1 - mean, 2.0);
 			}
-			m3 = m3 / n;
-			s3 = Math.pow(s3 / (n - 1), 1.5);
-			double skewness = m3 / s3;
+			
+			s3 = Math.pow(s3, 1.5);
+			
+			double skewness = m3 / s3 * Math.log(sum);
 			// double slope = calcSlope(count[0], count[1], count[2], count[3],
 			// count[4]);
 			// double cor = pearsonCorrelation(count);
