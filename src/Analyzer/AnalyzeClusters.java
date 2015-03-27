@@ -70,8 +70,8 @@ public class AnalyzeClusters {
 	private static void clusterWords() throws Throwable {
 		System.out.println(">>Read data from test files");
 		loadTestSet(new File(main.main.DATA_DIRECTORY
-				+ "keyWords_pearsonCor.csv"));
-		cluster(new File(main.main.DATA_DIRECTORY + "wordClusters.csv"));
+				+ "keyWords_skewness.csv"));
+		cluster(new File(main.main.DATA_DIRECTORY + "wordClustersskewness.csv"));
 
 	}
 
@@ -179,11 +179,11 @@ public class AnalyzeClusters {
 		int count = 0;
 		while (br.hasNextLine()) {
 			String[] values = br.nextLine().split(",");
-			if (values.length == 8) {
+			if (values.length == 9) {
 				String word = values[0];
 				if (stopwords.contains(word))
 					continue;
-				if (Double.parseDouble(values[1]) > -0.4)
+				if (Double.parseDouble(values[1]) < 0.1)
 					continue;
 				count++;
 				int freq = (int) Double.parseDouble(values[7]);

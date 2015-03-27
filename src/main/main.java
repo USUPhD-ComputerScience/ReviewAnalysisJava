@@ -22,7 +22,7 @@ import model.Review;
 import model.Vocabulary;
 
 public class main {
-	public static String DATA_DIRECTORY = "\\AndroidAnalysis\\ReviewData\\data\\v21-keyword\\";
+	public static String DATA_DIRECTORY = "\\AndroidAnalysis\\ReviewData\\data\\v23-keyword-CoC\\";
 	//public static String DATA_DIRECTORY = "\\AndroidAnalysis\\ReviewData\\data\\v22-request\\";
 
 	public static void main(String[] args) throws ClassNotFoundException,

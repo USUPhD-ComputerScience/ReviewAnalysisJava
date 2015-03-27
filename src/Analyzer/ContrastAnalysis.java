@@ -1,4 +1,4 @@
-package main;
+package Analyzer;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -21,7 +21,7 @@ import Managers.ApplicationManager;
 import Managers.WordPairsManager;
 import NLP.NatureLanguageProcessor;
 
-public class KeyWordDiscover {
+public class ContrastAnalysis {
 	public static final String DIR = "E:\\AndroidAnalysis\\ReviewData\\data\\v21-keyword\\";
 	public static List<String> supportiveData = new ArrayList<>();
 	public static List<String> unsupportiveData = new ArrayList<>();
@@ -34,10 +34,6 @@ public class KeyWordDiscover {
 					"VBN", "VBP", "VBZ", "NN", "NNP" }));
 
 	public static void main(String[] args) throws Throwable {
-		// extractWordsFromFile();
-		// extractWordsFromData();
-		// extractKeyFeatureUsingRatio();
-		extractKeyFeatureUsingSkewness();
 	}
 
 	private static void extractKeyFeatureUsingSkewness() throws Throwable {
@@ -123,9 +119,9 @@ public class KeyWordDiscover {
 		Set<String> stopWords = nlp.getStopWordSet1();
 		// WordPairsManager.getInstance();
 		int revcount = 0;
-		for (Entry<String, Application> app : ApplicationManager.getInstance()
-				.getAppSet().entrySet()) {
-			for (Review rev : app.getValue().getReviews()) {
+		Application app = ApplicationManager.getInstance().getAppSet()
+		for (Application app : ApplicationManager.getInstance().getAppSet()) {
+			for (Review rev : app.getReviews()) {
 				revcount++;
 				for (List<Integer> sentence : rev.getSentenceList()) {
 					for (int wordID : sentence) {
@@ -234,9 +230,8 @@ public class KeyWordDiscover {
 		Set<String> stopWords = nlp.getStopWordSet1();
 		// WordPairsManager.getInstance();
 		int revcount = 0;
-		for (Entry<String, Application> app : ApplicationManager.getInstance()
-				.getAppSet().entrySet()) {
-			for (Review rev : app.getValue().getReviews()) {
+		for (Application app : ApplicationManager.getInstance().getAppSet()) {
+			for (Review rev : app.getReviews()) {
 				revcount++;
 				for (List<Integer> sentence : rev.getSentenceList()) {
 					for (int wordID : sentence) {
@@ -297,9 +292,8 @@ public class KeyWordDiscover {
 		ApplicationManager appData = ApplicationManager.getInstance();
 		// WordPairsManager.getInstance();
 		int revcount = 0;
-		for (Entry<String, Application> app : ApplicationManager.getInstance()
-				.getAppSet().entrySet()) {
-			for (Review rev : app.getValue().getReviews()) {
+		for (Application app : ApplicationManager.getInstance().getAppSet()) {
+			for (Review rev : app.getReviews()) {
 				revcount++;
 				if (rev.getRating() < 3)
 					supportiveData.add(rev.toProperString());
@@ -327,4 +321,5 @@ public class KeyWordDiscover {
 		}
 		br.close();
 	}
+
 }

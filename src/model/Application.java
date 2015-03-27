@@ -23,29 +23,7 @@ public class Application implements Serializable {
 	private static final long serialVersionUID = -2497544910820359076L;
 	private Map<String, Review> reviewMap;
 	private Set<Long> updateDates;
-	private String appID;
 	private int dbID;
-
-	@Override
-	public int hashCode() {
-		return appID.hashCode();
-	}
-
-	@Override
-	public boolean equals(Object arg0) {
-		if (this == arg0)
-			return true;
-		if (!(arg0 instanceof Application))
-			return false;
-		Application obj = (Application) arg0;
-		if (this.appID.equals(obj.appID))
-			return true;
-		return false;
-	}
-
-	public String getAppID() {
-		return appID;
-	}
 
 	/**
 	 * Add a review to this Application
@@ -98,8 +76,7 @@ public class Application implements Serializable {
 		return dbID;
 	}
 
-	public Application(String appID, int dbID) {
-		this.appID = appID;
+	public Application(int dbID) {
 		this.dbID = dbID;
 		reviewMap = new HashMap<>();
 		updateDates = new HashSet<>();

@@ -9,7 +9,10 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import model.Application;
@@ -25,7 +28,7 @@ public class ApplicationManager implements Serializable {
 	 */
 	private static final long serialVersionUID = 6981176569155372512L;
 	private static ApplicationManager instance = null;
-	private Set<Application> appSet;
+	private Map<String, Application> appSet;
 	private long lastUpdate;
 	private long currentUpdate;
 	public static final String FILENAME = main.main.DATA_DIRECTORY
@@ -33,6 +36,7 @@ public class ApplicationManager implements Serializable {
 	private int totalReviewCount;
 
 	public static final WordVec word2vec = new WordVec();
+
 	public static synchronized ApplicationManager getInstance() {
 		if (instance == null) {
 			File fcheckExist = new File(FILENAME);
@@ -55,7 +59,7 @@ public class ApplicationManager implements Serializable {
 	}
 
 	private ApplicationManager() {
-		appSet = new HashSet<>();
+		appSet = new HashMap<>();
 		lastUpdate = 0;
 		currentUpdate = 0;
 		totalReviewCount = 0;
@@ -72,13 +76,14 @@ public class ApplicationManager implements Serializable {
 	 *         is successfully added
 	 * 
 	 */
-	public boolean addNewApp(String appID, int dbID) {
-		return appSet.add(new Application(appID, dbID));
+	public Application addNewApp(String appID, int dbID) {
+		return appSet.put(appID, new Application(dbID));
 	}
 
-	public void writeSentenceToFile(PrintWriter fileWriter,PostgreSQLConnector db ) {
-		for (Application app : appSet) {
-			app.writeSentenceToFile(fileWriter, lastUpdate,db);
+	public void writeSentenceToFile(PrintWriter fileWriter,
+			PostgreSQLConnector db) {
+		for (Entry<String, Application> app : appSet.entrySet()) {
+			app.getValue().writeSentenceToFile(fileWriter, lastUpdate, db);
 		}
 	}
 
@@ -94,8 +99,8 @@ public class ApplicationManager implements Serializable {
 					PostgreSQLConnector.REVIEWDB);
 			String fields[] = { "title", "text", "rating", "creationtime",
 					"documentversion", "reviewid", "device" };
-			for (Application app : appSet) {
-				String condition = "appid=" + app.getDbID()
+			for (Entry<String, Application> app : appSet.entrySet()) {
+				String condition = "appid=" + app.getValue().getDbID()
 						+ " AND creationtime>" + currentUpdate;
 				ResultSet results;
 				results = db.select(PostgreSQLConnector.REVIEWS_TABLE, fields,
@@ -103,7 +108,7 @@ public class ApplicationManager implements Serializable {
 				while (results.next()) {
 					try {
 						String reviewID = results.getString("reviewid");
-						if (app.contains(reviewID))
+						if (app.getValue().contains(reviewID))
 							continue;
 						Review.ReviewBuilder reviewBuilder = new Review.ReviewBuilder();
 						long creationTime = results.getLong("creationtime");
@@ -120,13 +125,12 @@ public class ApplicationManager implements Serializable {
 								.getString("documentversion"));
 						reviewBuilder.rating(results.getInt("rating"));
 						reviewBuilder.creationTime(creationTime);
-						reviewBuilder.application(app);
-						app.addReview(reviewBuilder.createReview());
+						reviewBuilder.application(app.getValue());
+						app.getValue().addReview(reviewBuilder.createReview());
 						if (thisUpdate < creationTime)
 							thisUpdate = creationTime;
 						count++;
 						if (count % 10000 == 0) {
-
 							long stopTime = System.nanoTime();
 							long duration = stopTime - startTime;
 							startTime = stopTime;
@@ -179,7 +183,11 @@ public class ApplicationManager implements Serializable {
 		return lastUpdate;
 	}
 
-	public Set<Application> getAppSet() {
+	public Map<String, Application> getAppSet() {
 		return appSet;
+	}
+
+	public Application getAppByID(String appid) {
+		return appSet.get(appid);
 	}
 }
